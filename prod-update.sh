@@ -201,11 +201,9 @@ print_header "Step 7: Building and Deploying Frontend"
 
 cd "$DEPLOY_PATH/frontend"
 
-# Install frontend dependencies if needed
-if [ ! -d "node_modules" ] || [ "package-lock.json" -nt "node_modules" ]; then
-    print_info "Installing frontend dependencies..."
-    npm ci 2>&1 | tee -a "$LOG_FILE"
-fi
+# Always install frontend dependencies (including devDependencies needed for build)
+print_info "Installing frontend dependencies..."
+npm install 2>&1 | tee -a "$LOG_FILE"
 
 # Build frontend
 print_info "Building frontend..."
