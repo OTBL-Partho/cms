@@ -804,7 +804,7 @@ const exportToExcel = async () => {
     const response = await getCMOExportData(exportParams);
 
     const allRecords = (response.data.data || []).map((row: any) => ({
-      'ID': row.CustomerId || '',
+      'ID': row.OLD_CONSUMER_ID || '',
       'NAME': row.CUSTOMER_NAME || '',
       'ADDRESS': row.ADDRESS || '',
       'MOBILE': row.MOBILE_NO || '',
