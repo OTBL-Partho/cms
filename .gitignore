@@ -42,9 +42,16 @@ desktop.ini
 *.suo
 *.user
 
-# Uploads
+# Uploads & temp files
 backend/uploads/*
 !backend/uploads/.gitkeep
+backend/temp/
+
+# DB backups (never commit)
+DB-backup/
+
+# Claude Code config
+.claude/
 
 # Build artifacts
 dist/
