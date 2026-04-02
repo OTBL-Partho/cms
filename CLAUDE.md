@@ -24,7 +24,7 @@ Never leave changes uncommitted after completing a task.
 
 - **Backend:** Node.js + Express 5, Sequelize ORM v6, SQLite 3 — runs on port 3000
 - **Frontend:** Vue 3 + Vite + TypeScript, Pinia, Vue Router — served by Vite dev or built to `dist/`
-- **Remote:** `https://github.com/mominulIslam135/cms.git` (origin/main)
+- **Remote:** `https://github.com/oculin/cms.git` (origin/main)
 
 ---
 

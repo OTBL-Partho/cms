@@ -121,7 +121,7 @@ cd "$DEPLOY_PATH"
 if [ ! -d ".git" ]; then
     print_error "Not a git repository!"
     print_info "Please clone your repository first:"
-    print_info "cd /var/www && git clone https://github.com/mominulIslam135/cms.git cms"
+    print_info "cd ~ && git clone https://github.com/oculin/cms.git cms"
     exit 1
 fi
 
