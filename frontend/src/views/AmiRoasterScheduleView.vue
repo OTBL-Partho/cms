@@ -486,8 +486,20 @@ onMounted(() => {
   border-left: 4px solid #3b82f6;
 }
 
-.is-past { opacity: 0.6; filter: grayscale(0.2); }
-.is-past .full-date { text-decoration: line-through; color: #94a3b8; }
+.is-past { 
+  opacity: 0.6; 
+  filter: grayscale(0.2); 
+}
+
+.is-past td {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.is-past .badge-status {
+  text-decoration: none !important;
+  display: inline-flex;
+}
 
 /* Empty State */
 .empty-state { padding: 4rem 0 !important; }
