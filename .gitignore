@@ -60,3 +60,7 @@ build/
 .yarn/install-state.gz
 database.sqlite
 backend/database.sqlite
+
+# AMI Roaster Schedule
+RoasterList.xlsx
+frontend/src/assets/roaster.json
