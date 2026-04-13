@@ -63,4 +63,4 @@ backend/database.sqlite
 
 # AMI Roaster Schedule
 RoasterList.xlsx
-frontend/src/assets/roaster.json
+
