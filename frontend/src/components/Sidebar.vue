@@ -12,6 +12,9 @@
         <router-link class="nav-link" to="/dashboard">Dashboard</router-link>
       </li>
       <li v-if="auth.isAuthenticated">
+        <router-link class="nav-link" to="/roaster-schedule">📅 AMI Roaster Schedule</router-link>
+      </li>
+      <li v-if="auth.isAuthenticated">
         <router-link class="nav-link" to="/tickets">Tickets</router-link>
       </li>
       <li v-if="auth.isAuthenticated && auth.user?.role === 'Manager'">
