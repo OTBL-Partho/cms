@@ -61,7 +61,7 @@ const getCmoApiToken = async () => {
 exports.getCMOs = async (req, res) => {
   try {
     const token = await getCmoApiToken();
-    const { page, limit, isApproved, search, sortBy, sortOrder, nocs, dateFrom, dateTo, isMDMEntry, cpcCpr } = req.query;
+    const { page, limit, isApproved, search, sortBy, sortOrder, nocs, dateFrom, dateTo, isMDMEntry, cpcCpr, noContact } = req.query;
 
     const params = {};
     if (page) params.page = page;
@@ -75,6 +75,7 @@ exports.getCMOs = async (req, res) => {
     if (dateTo) params.dateTo = dateTo;
     if (isMDMEntry !== undefined && isMDMEntry !== '') params.isMDMEntry = isMDMEntry;
     if (cpcCpr !== undefined && cpcCpr !== '') params.cpcCpr = cpcCpr;
+    if (noContact !== undefined && noContact !== '') params.noContact = noContact;
 
     const response = await axios.get(`${CMO_API_URL}/cmo/cms-list`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -220,7 +221,7 @@ exports.checkMDMEntry = async (req, res) => {
 exports.exportCMOData = async (req, res) => {
   try {
     const token = await getCmoApiToken();
-    const { search, isApproved, nocs, dateFrom, dateTo, isMDMEntry, cpcCpr } = req.query;
+    const { search, isApproved, nocs, dateFrom, dateTo, isMDMEntry, cpcCpr, noContact } = req.query;
 
     const params = {};
     if (search) params.search = search;
@@ -230,6 +231,7 @@ exports.exportCMOData = async (req, res) => {
     if (dateTo) params.dateTo = dateTo;
     if (isMDMEntry !== undefined && isMDMEntry !== '') params.isMDMEntry = isMDMEntry;
     if (cpcCpr !== undefined && cpcCpr !== '') params.cpcCpr = cpcCpr;
+    if (noContact !== undefined && noContact !== '') params.noContact = noContact;
 
     const response = await axios.get(`${CMO_API_URL}/cmo/cms-export`, {
       headers: { Authorization: `Bearer ${token}` },

@@ -173,7 +173,7 @@
       </div>
 
       <!-- Row 2 -->
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <!-- NOCS Dropdown -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">NOCS</label>
@@ -233,6 +233,19 @@
           >
             <option value="">All</option>
             <option v-for="c in cpcCprOptions" :key="c" :value="c">{{ c }}</option>
+          </select>
+        </div>
+
+        <!-- No Contact Filter -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
+          <select
+            v-model="filters.noContact"
+            @change="fetchCMOs"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
+          >
+            <option value="">All</option>
+            <option value="1">No Contact Number</option>
           </select>
         </div>
       </div>
@@ -685,7 +698,8 @@ const filters = ref({
   dateFrom: '',
   dateTo: '',
   isMDMEntry: '',
-  cpcCpr: ''
+  cpcCpr: '',
+  noContact: ''
 });
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -739,6 +753,7 @@ const fetchCMOs = async () => {
     if (filters.value.dateTo) params.dateTo = filters.value.dateTo;
     if (filters.value.isMDMEntry !== '') params.isMDMEntry = filters.value.isMDMEntry;
     if (filters.value.cpcCpr !== '') params.cpcCpr = filters.value.cpcCpr;
+    if (filters.value.noContact !== '') params.noContact = filters.value.noContact;
 
     const response = await getCMOs(params);
     cmos.value = response.data.data || [];
@@ -779,7 +794,8 @@ const clearFilters = () => {
     dateFrom: '',
     dateTo: '',
     isMDMEntry: '',
-    cpcCpr: ''
+    cpcCpr: '',
+    noContact: ''
   };
   fetchCMOs();
 };
@@ -800,6 +816,7 @@ const exportToExcel = async () => {
     if (filters.value.dateTo) exportParams.dateTo = filters.value.dateTo;
     if (filters.value.isMDMEntry !== '') exportParams.isMDMEntry = filters.value.isMDMEntry;
     if (filters.value.cpcCpr !== '') exportParams.cpcCpr = filters.value.cpcCpr;
+    if (filters.value.noContact !== '') exportParams.noContact = filters.value.noContact;
 
     const response = await getCMOExportData(exportParams);
 
