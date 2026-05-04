@@ -79,7 +79,7 @@ exports.getCMOs = async (req, res) => {
     const response = await axios.get(`${CMO_API_URL}/cmo/cms-list`, {
       headers: { Authorization: `Bearer ${token}` },
       params,
-      timeout: 30000
+      timeout: 50000
     });
 
     return res.json(response.data);

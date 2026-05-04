@@ -348,23 +348,23 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
             <tr>
-              <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
-              <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
-              <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Address</th>
+              <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer No.</th>
+              <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">New Meter No</th>
+              <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Install Dt</th>
+              <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">NOCS</th>
+              <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">MDM Entry</th>
               <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Mobile</th>
               <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Changed Mobile</th>
               <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Secondary Mobile</th>
-              <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">NOCS</th>
-              <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Install Dt</th>
-              <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">New Meter No</th>
               <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Lat</th>
               <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Long</th>
+              <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+              <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Address</th>
               <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Old Consumer ID</th>
               <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Old Meter No</th>
               <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Old Reading</th>
               <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">New Meter Type</th>
               <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Approved</th>
-              <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">MDM Entry</th>
               <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Revisit</th>
               <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Installed By</th>
               <th class="px-4 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created By</th>
@@ -374,16 +374,20 @@
           <tbody class="bg-white divide-y divide-gray-100">
             <tr v-for="cmo in cmos" :key="cmo.Id" class="hover:bg-blue-50/50 transition-colors duration-150">
               <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{ cmo.OldConsumerId || '-' }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ cmo.CustomerName || '-' }}</td>
-              <td class="px-4 py-3 text-sm text-gray-600 max-w-[200px] truncate" :title="(cmo as any).Address || ''">{{ (cmo as any).Address || '-' }}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ cmo.NewMeterNoOCR || '-' }}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ cmo.InstallDate || '-' }}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ (cmo as any).CustomerNOCS || '-' }}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm">
+                <span v-if="cmo.IsMDMEntry" class="text-green-600 font-medium">Yes</span>
+                <span v-else class="text-gray-400">No</span>
+              </td>
               <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ (cmo as any).MobileNo || '-' }}</td>
               <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ (cmo as any).ChangedMobileNo || '-' }}</td>
               <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ (cmo as any).SecondaryMobileNo || '-' }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ (cmo as any).NOCS || '-' }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ cmo.InstallDate || '-' }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ cmo.NewMeterNoOCR || '-' }}</td>
               <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ cmo.Latitude || '-' }}</td>
               <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ cmo.Longitude || '-' }}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ cmo.CustomerName || '-' }}</td>
+              <td class="px-4 py-3 text-sm text-gray-600 max-w-[200px] truncate" :title="(cmo as any).CustomerAddress || ''">{{ (cmo as any).CustomerAddress || '-' }}</td>
               <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ cmo.OldConsumerId || '-' }}</td>
               <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ cmo.OldMeterNoOCR || '-' }}</td>
               <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ cmo.OldMeterReadingOCR || '-' }}</td>
@@ -392,10 +396,6 @@
                 <span :class="cmo.IsApproved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold">
                   {{ cmo.IsApproved ? 'Approved' : 'Pending' }}
                 </span>
-              </td>
-              <td class="px-4 py-3 whitespace-nowrap text-sm">
-                <span v-if="cmo.IsMDMEntry" class="text-green-600 font-medium">Yes</span>
-                <span v-else class="text-gray-400">No</span>
               </td>
               <td class="px-4 py-3 whitespace-nowrap text-sm">
                 <span v-if="cmo.HasRevisit" class="text-orange-600 font-medium">Yes</span>
@@ -803,24 +803,27 @@ const exportToExcel = async () => {
 
     const response = await getCMOExportData(exportParams);
 
-    const allRecords = (response.data.data || []).map((row: any) => ({
-      'ID': row.CustomerId || '',
-      'NAME': row.CUSTOMER_NAME || '',
-      'ADDRESS': row.ADDRESS || '',
-      'MOBILE': row.MOBILE_NO || '',
-      'CHANGED MOBILE': row.CHANGED_MOBILE_NO || '',
-      'SECONDARY MOBILE': row.SECONDARY_MOBILE_NO || '',
-      'NOCS': row.NOCS || '',
-      'Install Dt': row.InstallDate || '',
+    const rawData = response.data.data || [];
+    if (rawData.length > 0) console.log('[CMO Export] First record keys:', Object.keys(rawData[0]), rawData[0]);
+
+    const allRecords = rawData.map((row: any) => ({
+      'Customer No.': row.OldConsumerId || '',
       'New Meter No.': row.NewMeterNoOCR || '',
+      'NAME': row.CustomerName || '',
+      'ADDRESS': row.CustomerAddress || '',
+      'MOBILE': row.ChangedMobile || row.SecondaryMobile || row.CustomerMobile || '',
+      'NOCS': row.CustomerNOCS || '',
+      'Install Dt': row.InstallDate || '',
       'Latitude': row.Latitude || '',
-      'Longitude': row.Longitude || ''
+      'Longitude': row.Longitude || '',
+      'MDM Entry': row.IsMDMEntry ? 'Yes' : 'No'
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(allRecords);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'CMO Records');
-    XLSX.writeFile(workbook, `cmo_records_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    const nocsSuffix = filters.value.nocs ? `_${filters.value.nocs}` : '';
+    XLSX.writeFile(workbook, `cmo_records_${new Date().toISOString().slice(0, 10)}${nocsSuffix}.xlsx`);
   } catch (err) {
     console.error('Error exporting to Excel:', err);
   } finally {
