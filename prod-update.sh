@@ -13,8 +13,8 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Configuration
-DEPLOY_PATH="/var/www/cms"
+# Configuration — auto-detect deploy path from script location
+DEPLOY_PATH="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_DIR="$DEPLOY_PATH/backend"
 FRONTEND_DIR="$DEPLOY_PATH/frontend"
 FRONTEND_DIST="/var/www/html"
@@ -23,8 +23,8 @@ BACKUP_DIR="$DEPLOY_PATH/backups"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 LOG_FILE="$DEPLOY_PATH/logs/update_${TIMESTAMP}.log"
 
-# Create log directory
-mkdir -p "$DEPLOY_PATH/logs"
+# Create log and backup directories
+mkdir -p "$DEPLOY_PATH/logs" "$BACKUP_DIR/database" "$BACKUP_DIR/code"
 
 # Log function
 log() {
@@ -121,7 +121,7 @@ cd "$DEPLOY_PATH"
 if [ ! -d ".git" ]; then
     print_error "Not a git repository!"
     print_info "Please clone your repository first:"
-    print_info "cd /var/www && git clone <your-repo-url> cms"
+    print_info "cd ~ && git clone https://github.com/oculin/cms.git cms"
     exit 1
 fi
 
@@ -139,7 +139,9 @@ fi
 print_info "Pulling latest changes..."
 echo ""
 
-if git pull origin "$CURRENT_BRANCH" 2>&1 | tee -a "$LOG_FILE"; then
+git pull origin "$CURRENT_BRANCH" 2>&1 | tee -a "$LOG_FILE"
+GIT_EXIT=${PIPESTATUS[0]}
+if [ $GIT_EXIT -eq 0 ]; then
     echo ""
     print_success "Code updated from GitHub"
 else
@@ -199,11 +201,9 @@ print_header "Step 7: Building and Deploying Frontend"
 
 cd "$DEPLOY_PATH/frontend"
 
-# Install frontend dependencies if needed
-if [ ! -d "node_modules" ] || [ "package-lock.json" -nt "node_modules" ]; then
-    print_info "Installing frontend dependencies..."
-    npm ci 2>&1 | tee -a "$LOG_FILE"
-fi
+# Always install frontend dependencies (including devDependencies needed for build)
+print_info "Installing frontend dependencies..."
+npm install 2>&1 | tee -a "$LOG_FILE"
 
 # Build frontend
 print_info "Building frontend..."
