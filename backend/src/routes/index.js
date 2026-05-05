@@ -26,6 +26,8 @@ const analyticsRoutes = require('./analytics');
 const exportRoutes = require('./export');
 const connectionLogRoutes = require('./connectionLogs');
 const cmoRoutes = require('./cmo');
+const cmoMeterReplacementRoutes = require('./cmoMeterReplacement');
+const cmoMeterSwapRoutes = require('./cmoMeterSwap');
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes); // Added user routes
@@ -54,5 +56,7 @@ router.use('/analytics', analyticsRoutes);
 router.use('/export', exportRoutes);
 router.use('/connection-logs', connectionLogRoutes);
 router.use('/cmo', cmoRoutes);
+router.use('/cmo-meter-replacement', cmoMeterReplacementRoutes);
+router.use('/cmo-meter-swap', cmoMeterSwapRoutes);
 
 module.exports = router;

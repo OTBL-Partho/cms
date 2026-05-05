@@ -53,8 +53,11 @@
       <li v-if="auth.isAuthenticated && (auth.user?.role === 'Super Admin' || auth.user?.role === 'Admin' || auth.user?.role === 'Manager' || auth.user?.role === 'Agent')">
         <router-link class="nav-link" to="/complaints/reports">Complaint Reports</router-link>
       </li>
-      <li v-if="auth.isAuthenticated">
+      <li v-if="auth.isAuthenticated && (auth.user?.role === 'Super Admin' || auth.user?.role === 'Admin' || auth.user?.role === 'Manager')">
         <router-link class="nav-link" to="/meter-replacement">Meter Replacement</router-link>
+      </li>
+      <li v-if="auth.isAuthenticated && (auth.user?.role === 'Super Admin' || auth.user?.role === 'Admin' || auth.user?.role === 'Manager')">
+        <router-link class="nav-link" to="/meter-swap">Meter Swap</router-link>
       </li>
       <li v-if="auth.isAuthenticated">
         <router-link class="nav-link" to="/batch-operational-report">Batch Report</router-link>

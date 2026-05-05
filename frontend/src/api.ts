@@ -267,3 +267,37 @@ export const getBillStopSnapshot = (params?: {
 export const getBillStopSnapshotSummary = () => {
   return apiClient.get('/bill-stop/snapshot/summary');
 };
+
+// --- CMO Meter Replacement --- //
+export const getCMOMeterReplacements = (params?: { page?: number; limit?: number; search?: string; status?: string }) => {
+  return apiClient.get('/cmo-meter-replacement', { params });
+};
+
+export const getCMOMeterReplacementStats = () => {
+  return apiClient.get('/cmo-meter-replacement/stats');
+};
+
+export const processCMOMeterReplacement = (id: number, data: { OldConsumerId: string; OldMeterNumber: string; ReplaceMeterNumber: string; ReplaceDate: string; CustomerName?: string }) => {
+  return apiClient.post(`/cmo-meter-replacement/${id}/process`, data);
+};
+
+export const processAllOpenCMOMeterReplacements = () => {
+  return apiClient.post('/cmo-meter-replacement/process-all-open');
+};
+
+export const updateCMOMeterReplacementStatus = (id: number, status: string) => {
+  return apiClient.patch(`/cmo-meter-replacement/${id}/status`, { status });
+};
+
+// --- CMO Meter Swap --- //
+export const getCMOMeterSwaps = (params?: { page?: number; limit?: number; search?: string; status?: string }) => {
+  return apiClient.get('/cmo-meter-swap', { params });
+};
+
+export const getCMOMeterSwapStats = () => {
+  return apiClient.get('/cmo-meter-swap/stats');
+};
+
+export const updateCMOMeterSwapStatus = (id: number, status: string) => {
+  return apiClient.patch(`/cmo-meter-swap/${id}/status`, { status });
+};

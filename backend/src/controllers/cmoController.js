@@ -1,58 +1,7 @@
 const axios = require('axios');
 const { Op } = require('sequelize');
 const Customer = require('../models/Customer');
-
-const CMO_API_URL = process.env.CMO_API_URL || 'http://192.168.10.100:8085/api';
-const CMO_API_USERNAME = process.env.CMO_API_USERNAME;
-const CMO_API_PASSWORD = process.env.CMO_API_PASSWORD;
-
-// Cache the CMO API token
-let cachedToken = null;
-let tokenExpiry = null;
-let loginPromise = null; // Mutex: prevents concurrent login attempts (thundering herd)
-
-/**
- * Login to the CMO API and cache the JWT token.
- * Uses a shared promise so concurrent requests wait for one login instead of all racing.
- */
-const getCmoApiToken = async () => {
-  // Return cached token if still valid (refresh 5 min before expiry)
-  if (cachedToken && tokenExpiry && Date.now() < tokenExpiry - 5 * 60 * 1000) {
-    return cachedToken;
-  }
-
-  // If a login is already in progress, wait for it instead of making another request
-  if (loginPromise) {
-    return loginPromise;
-  }
-
-  loginPromise = (async () => {
-    try {
-      const response = await axios.post(`${CMO_API_URL}/auth/login`, {
-        username: CMO_API_USERNAME,
-        password: CMO_API_PASSWORD
-      });
-
-      if (response.data.success && response.data.data.accessToken) {
-        cachedToken = response.data.data.accessToken;
-        // Token typically expires in 24h, refresh after 23h
-        tokenExpiry = Date.now() + 23 * 60 * 60 * 1000;
-        return cachedToken;
-      }
-
-      throw new Error('Failed to obtain CMO API token - no accessToken in response');
-    } catch (error) {
-      console.error('CMO API login error:', error.response?.data || error.message);
-      cachedToken = null;
-      tokenExpiry = null;
-      throw new Error(`Failed to authenticate with CMO API: ${error.response?.data?.message || error.message}`);
-    } finally {
-      loginPromise = null; // Release mutex so future requests can retry
-    }
-  })();
-
-  return loginPromise;
-};
+const { CMO_API_URL, getCmoApiToken, clearCmoToken } = require('../services/cmoApiService');
 
 exports.getCMOs = async (req, res) => {
   try {
@@ -83,8 +32,7 @@ exports.getCMOs = async (req, res) => {
     console.error('CMO proxy error:', error.response?.data || error.message);
     // If auth failed, clear token so next request retries login
     if (error.response?.status === 401) {
-      cachedToken = null;
-      tokenExpiry = null;
+      clearCmoToken();
     }
     const statusCode = error.response?.status || 500;
     const message = error.response?.data?.message || error.message || 'Failed to fetch CMO data';
@@ -200,8 +148,7 @@ exports.checkMDMEntry = async (req, res) => {
   } catch (error) {
     console.error('CMO check MDM entry error:', error.response?.data || error.message);
     if (error.response?.status === 401) {
-      cachedToken = null;
-      tokenExpiry = null;
+      clearCmoToken();
     }
     const statusCode = error.response?.status || 500;
     const message = error.response?.data?.message || error.message || 'Failed to check MDM entries';
@@ -237,8 +184,7 @@ exports.exportCMOData = async (req, res) => {
   } catch (error) {
     console.error('CMO export proxy error:', error.response?.data || error.message);
     if (error.response?.status === 401) {
-      cachedToken = null;
-      tokenExpiry = null;
+      clearCmoToken();
     }
     const statusCode = error.response?.status || 500;
     const message = error.response?.data?.message || error.message || 'Failed to fetch CMO export data';
@@ -309,8 +255,7 @@ exports.uploadCustomerInfo = async (req, res) => {
   } catch (error) {
     console.error('CMO upload customers proxy error:', error.response?.data || error.message);
     if (error.response?.status === 401) {
-      cachedToken = null;
-      tokenExpiry = null;
+      clearCmoToken();
     }
     const statusCode = error.response?.status || 500;
     const message = error.response?.data?.message || error.message || 'Failed to upload customer data';
@@ -335,8 +280,7 @@ exports.getFilterOptions = async (req, res) => {
   } catch (error) {
     console.error('CMO filter-options proxy error:', error.response?.data || error.message);
     if (error.response?.status === 401) {
-      cachedToken = null;
-      tokenExpiry = null;
+      clearCmoToken();
     }
     const statusCode = error.response?.status || 500;
     const message = error.response?.data?.message || error.message || 'Failed to fetch filter options';
@@ -360,8 +304,7 @@ exports.getCMOStatistics = async (req, res) => {
   } catch (error) {
     console.error('CMO statistics proxy error:', error.response?.data || error.message);
     if (error.response?.status === 401) {
-      cachedToken = null;
-      tokenExpiry = null;
+      clearCmoToken();
     }
     const statusCode = error.response?.status || 500;
     const message = error.response?.data?.message || error.message || 'Failed to fetch CMO statistics';

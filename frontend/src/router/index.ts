@@ -56,6 +56,7 @@ const router = createRouter({
         { path: 'bill-stop-report', name: 'bill-stop-report', component: () => import('../views/BillStopReportView.vue'), meta: { roles: ['Super Admin', 'Admin', 'Manager'] } },
         { path: 'users/create', name: 'user-create', component: () => import('../views/UserCreateView.vue'), meta: { roles: ['Super Admin', 'Admin'] } },
         { path: 'meter-replacement', name: 'meter-replacement', component: () => import('../views/MeterReplacementView.vue'), meta: { roles: ['Super Admin', 'Admin', 'Manager'] } },
+        { path: 'meter-swap', name: 'meter-swap', component: () => import('../views/MeterSwapView.vue'), meta: { roles: ['Super Admin', 'Admin', 'Manager'] } },
         { path: 'batch-report', name: 'batch-operational-report', component: () => import('../views/BatchOperationalReportView.vue'), meta: { roles: ['Super Admin', 'Admin', 'Manager'] } },
         { path: 'meter-estimator', name: 'meter-estimator', component: () => import('../views/MeterEstimatorView.vue'), meta: { roles: ['Super Admin', 'Admin', 'Manager'] } },
         { path: 'c2m-upload', name: 'c2m-upload', component: () => import('../views/C2MUploadView.vue'), meta: { roles: ['Super Admin', 'Admin', 'Manager'] } },
