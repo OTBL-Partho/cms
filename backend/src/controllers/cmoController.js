@@ -54,10 +54,6 @@ const getCmoApiToken = async () => {
   return loginPromise;
 };
 
-/**
- * GET /api/cmo — Proxy to CMO API GET /api/cmo
- * Passes query params: page, limit, status, search, sortBy, sortOrder
- */
 exports.getCMOs = async (req, res) => {
   try {
     const token = await getCmoApiToken();
