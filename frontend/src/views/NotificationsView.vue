@@ -1,169 +1,207 @@
 <template>
-  <div class="notifications-view">
-    <!-- Page Header -->
-    <div class="page-header">
-      <div class="header-content">
-        <div class="header-title">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-          <h1>Notifications</h1>
-          <span v-if="unreadCount > 0" class="unread-badge">{{ unreadCount }}</span>
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-violet-50 to-purple-50 p-4 md:p-6 lg:p-8">
+
+    <!-- Header -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 rounded-3xl p-6 md:p-8 mb-6 shadow-2xl shadow-violet-200">
+      <!-- Decorative blobs -->
+      <div class="absolute -top-8 -right-8 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+      <div class="absolute -bottom-8 -left-8 w-40 h-40 bg-indigo-400/20 rounded-full blur-2xl"></div>
+
+      <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <!-- Title area -->
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-12 h-12 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center">
+              <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-2xl md:text-3xl font-bold text-white">Notifications</h1>
+                <span v-if="unreadCount > 0" class="inline-flex items-center justify-center min-w-[26px] h-[26px] px-1.5 bg-white text-violet-700 text-xs font-bold rounded-full shadow-lg animate-pulse">
+                  {{ unreadCount }}
+                </span>
+              </div>
+              <p class="text-violet-200 text-sm mt-0.5">Stay updated with your tickets and activities</p>
+            </div>
+          </div>
         </div>
-        <p class="header-subtitle">Stay updated with your tickets and activities</p>
-      </div>
-      <div class="header-actions">
-        <button class="btn btn--primary" @click="markAllAsRead" :disabled="unreadCount === 0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          Mark All as Read
-        </button>
-        <button class="btn btn--outline" @click="clearReadNotifications">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-          </svg>
-          Clear Read
-        </button>
+
+        <!-- Actions -->
+        <div class="flex gap-3 flex-wrap">
+          <button
+            @click="markAllAsRead"
+            :disabled="unreadCount === 0"
+            class="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-violet-700 font-semibold rounded-xl text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Mark All Read
+          </button>
+          <button
+            @click="clearReadNotifications"
+            class="inline-flex items-center gap-2 px-4 py-2.5 bg-white/15 text-white font-semibold rounded-xl text-sm border border-white/30 hover:bg-white/25 hover:-translate-y-0.5 transition-all"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Clear Read
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Filters and Search -->
-    <div class="controls-section">
-      <!-- Filter Tabs -->
-      <div class="filter-tabs">
-        <button
-          :class="['filter-tab', { active: activeFilter === 'all' }]"
-          @click="activeFilter = 'all'"
-        >
-          All
-        </button>
-        <button
-          :class="['filter-tab', { active: activeFilter === 'unread' }]"
-          @click="activeFilter = 'unread'"
-        >
-          Unread
-          <span v-if="unreadCount > 0" class="tab-badge">{{ unreadCount }}</span>
-        </button>
-        <button
-          :class="['filter-tab', { active: activeFilter === 'ticket' }]"
-          @click="activeFilter = 'ticket'"
-        >
-          Tickets
-        </button>
-        <button
-          :class="['filter-tab', { active: activeFilter === 'comment' }]"
-          @click="activeFilter = 'comment'"
-        >
-          Comments
-        </button>
-        <button
-          :class="['filter-tab', { active: activeFilter === 'assignment' }]"
-          @click="activeFilter = 'assignment'"
-        >
-          Assignments
-        </button>
-        <button
-          :class="['filter-tab', { active: activeFilter === 'status' }]"
-          @click="activeFilter = 'status'"
-        >
-          Status
-        </button>
-      </div>
+    <!-- Stats Bar -->
+    <div class="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6">
+      <button
+        v-for="tab in filterTabs" :key="tab.key"
+        @click="activeFilter = tab.key"
+        :class="[
+          'relative flex flex-col items-center justify-center gap-1 p-3 rounded-2xl border-2 text-xs font-semibold transition-all duration-200',
+          activeFilter === tab.key
+            ? 'bg-white border-violet-500 text-violet-700 shadow-lg shadow-violet-100 -translate-y-0.5'
+            : 'bg-white/70 border-transparent text-gray-500 hover:bg-white hover:border-violet-200 hover:text-violet-600'
+        ]"
+      >
+        <span class="text-lg" v-html="tab.emoji"></span>
+        <span>{{ tab.label }}</span>
+        <span
+          v-if="tab.key === 'unread' && unreadCount > 0"
+          class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center"
+        >{{ unreadCount }}</span>
+      </button>
+    </div>
 
-      <!-- Search Bar -->
-      <div class="search-bar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="m21 21-4.35-4.35"/>
-        </svg>
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search notifications..."
-          class="search-input"
-        />
-      </div>
+    <!-- Search -->
+    <div class="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg border border-white/20 px-4 py-3 mb-6 flex items-center gap-3">
+      <svg class="w-5 h-5 text-gray-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Search notifications by title or message..."
+        class="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
+      />
+      <button
+        v-if="searchQuery"
+        @click="searchQuery = ''"
+        class="w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-gray-200 transition-colors"
+      >
+        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="loading-state">
-      <div class="loader"></div>
-      <p>Loading notifications...</p>
+    <div v-if="loading" class="space-y-3">
+      <div v-for="i in 5" :key="i" class="bg-white/80 backdrop-blur rounded-2xl p-5 flex gap-4 animate-pulse">
+        <div class="w-12 h-12 bg-gray-200 rounded-2xl flex-shrink-0"></div>
+        <div class="flex-1 space-y-2">
+          <div class="h-4 bg-gray-200 rounded-lg w-3/4"></div>
+          <div class="h-3 bg-gray-100 rounded-lg w-full"></div>
+          <div class="h-3 bg-gray-100 rounded-lg w-2/3"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="filteredNotifications.length === 0" class="empty-state">
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-      </svg>
-      <h3>No notifications</h3>
-      <p v-if="activeFilter !== 'all'">Try changing your filter or search</p>
+    <div v-else-if="filteredNotifications.length === 0" class="bg-white/80 backdrop-blur-lg rounded-3xl shadow-lg border border-white/20 py-20 flex flex-col items-center">
+      <div class="w-20 h-20 bg-violet-50 rounded-3xl flex items-center justify-center mb-4">
+        <svg class="w-10 h-10 text-violet-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </div>
+      <h3 class="text-gray-700 font-semibold text-lg mb-1">No notifications</h3>
+      <p class="text-gray-400 text-sm">{{ activeFilter !== 'all' ? 'Try a different filter or clear your search' : "You're all caught up!" }}</p>
     </div>
 
-    <!-- Notifications List Grouped by Date -->
-    <div v-else class="notifications-container">
-      <div v-for="group in groupedNotifications" :key="group.label" class="notification-group">
-        <h2 class="group-label">{{ group.label }}</h2>
-        <div class="notifications-list">
+    <!-- Notification Groups -->
+    <div v-else class="space-y-8">
+      <div v-for="group in groupedNotifications" :key="group.label">
+        <!-- Group Label -->
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-xs font-bold uppercase tracking-widest text-gray-400">{{ group.label }}</span>
+          <div class="flex-1 h-px bg-gray-200/70"></div>
+          <span class="text-xs text-gray-400 font-medium">{{ group.notifications.length }} item{{ group.notifications.length !== 1 ? 's' : '' }}</span>
+        </div>
+
+        <!-- Cards -->
+        <div class="space-y-2.5">
           <div
             v-for="notif in group.notifications"
             :key="notif.id"
-            :class="['notification-card', { unread: !notif.isRead }]"
             @click="handleNotificationClick(notif)"
+            :class="[
+              'group relative flex items-start gap-4 p-4 md:p-5 rounded-2xl border cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg',
+              notif.isRead
+                ? 'bg-white/70 backdrop-blur border-gray-100 hover:border-violet-200 hover:shadow-violet-100'
+                : 'bg-white backdrop-blur border-violet-200 shadow-md shadow-violet-100/50'
+            ]"
           >
+            <!-- Unread left bar -->
+            <div
+              v-if="!notif.isRead"
+              class="absolute left-0 top-4 bottom-4 w-1 rounded-r-full"
+              :style="{ backgroundColor: notif.color || '#7c3aed' }"
+            ></div>
+
             <!-- Icon -->
-            <div class="notification-icon" :style="{ backgroundColor: notif.color || '#6b7280' }">
+            <div
+              class="w-11 h-11 md:w-12 md:h-12 flex-shrink-0 rounded-2xl flex items-center justify-center shadow-sm"
+              :style="{ background: `linear-gradient(135deg, ${notif.color || '#7c3aed'}, ${adjustColor(notif.color || '#7c3aed')})` }"
+            >
               <div v-html="getIcon(notif.icon)"></div>
             </div>
 
             <!-- Content -->
-            <div class="notification-content">
-              <div class="notification-header">
-                <h3 class="notification-title">{{ notif.title }}</h3>
-                <span class="notification-time">{{ formatRelativeTime(notif.createdAt) }}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2 mb-1">
+                <h3 :class="['text-sm font-semibold leading-tight', notif.isRead ? 'text-gray-600' : 'text-gray-900']">
+                  {{ notif.title }}
+                  <span
+                    v-if="!notif.isRead"
+                    class="inline-block ml-1.5 w-2 h-2 bg-violet-500 rounded-full align-middle"
+                  ></span>
+                </h3>
+                <span class="text-xs text-gray-400 whitespace-nowrap flex-shrink-0 mt-0.5">{{ formatRelativeTime(notif.createdAt) }}</span>
               </div>
-              <p class="notification-message">{{ notif.message }}</p>
-
-              <!-- Priority Badge -->
-              <span
-                v-if="notif.priority === 'high' || notif.priority === 'urgent'"
-                :class="['priority-badge', `priority-${notif.priority}`]"
-              >
-                {{ notif.priority }}
-              </span>
+              <p class="text-xs text-gray-500 leading-relaxed line-clamp-2">{{ notif.message }}</p>
+              <div class="flex items-center gap-2 mt-2" v-if="notif.priority === 'high' || notif.priority === 'urgent'">
+                <span
+                  :class="[
+                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide',
+                    notif.priority === 'urgent' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                  ]"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full" :class="notif.priority === 'urgent' ? 'bg-red-500' : 'bg-amber-500'"></span>
+                  {{ notif.priority }}
+                </span>
+              </div>
             </div>
 
-            <!-- Actions -->
-            <div class="notification-actions">
+            <!-- Action Buttons (hidden, appear on hover) -->
+            <div class="flex-shrink-0 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <button
                 v-if="!notif.isRead"
-                class="action-btn"
                 @click.stop="markAsRead(notif.id)"
                 title="Mark as read"
+                class="w-8 h-8 flex items-center justify-center rounded-xl bg-violet-50 text-violet-500 hover:bg-violet-500 hover:text-white transition-colors"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
               </button>
               <button
-                class="action-btn"
                 @click.stop="deleteNotification(notif.id)"
                 title="Delete"
+                class="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
           </div>
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -171,6 +209,29 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../api';
+
+// Filter tabs config
+const filterTabs = [
+  { key: 'all', label: 'All', emoji: '🔔' },
+  { key: 'unread', label: 'Unread', emoji: '✉️' },
+  { key: 'ticket', label: 'Tickets', emoji: '🎫' },
+  { key: 'comment', label: 'Comments', emoji: '💬' },
+  { key: 'assignment', label: 'Assign', emoji: '👤' },
+  { key: 'status', label: 'Status', emoji: '📊' },
+];
+
+// Slightly darken a hex color for gradient effect
+const adjustColor = (hex: string): string => {
+  try {
+    const n = parseInt(hex.replace('#', ''), 16);
+    const r = Math.max(0, (n >> 16) - 30);
+    const g = Math.max(0, ((n >> 8) & 0xff) - 30);
+    const b = Math.max(0, (n & 0xff) - 30);
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+  } catch {
+    return hex;
+  }
+};
 
 // Icons as SVG strings
 const getIcon = (iconName: string): string => {
@@ -400,9 +461,9 @@ const formatRelativeTime = (date: string): string => {
   const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
 
   if (seconds < 60) return 'Just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
   return then.toLocaleDateString();
 };
 
@@ -432,399 +493,3 @@ onUnmounted(() => {
   stopPolling();
 });
 </script>
-
-<style scoped>
-.notifications-view {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: var(--spacing-xl);
-  min-height: 100vh;
-  background-color: var(--color-background);
-}
-
-/* Page Header */
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-2xl);
-  padding: var(--spacing-2xl);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: var(--radius-2xl);
-  color: white;
-  box-shadow: 0 20px 25px -5px rgba(102, 126, 234, 0.3);
-}
-
-.header-content {
-  flex: 1;
-}
-
-.header-title {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-sm);
-}
-
-.header-title h1 {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-  margin: 0;
-}
-
-.unread-badge {
-  background: rgba(255, 255, 255, 0.3);
-  color: white;
-  padding: var(--spacing-xs) var(--spacing-md);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-}
-
-.header-subtitle {
-  margin: 0;
-  opacity: 0.9;
-}
-
-.header-actions {
-  display: flex;
-  gap: var(--spacing-md);
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: var(--radius-lg);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  border: none;
-  transition: all 0.3s ease;
-}
-
-.btn--primary {
-  background: white;
-  color: #667eea;
-}
-
-.btn--primary:hover:not(:disabled) {
-  background: #f3f4f6;
-  transform: translateY(-2px);
-}
-
-.btn--primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn--outline {
-  background: transparent;
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.5);
-}
-
-.btn--outline:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Controls Section */
-.controls-section {
-  background: var(--color-surface);
-  padding: var(--spacing-lg);
-  border-radius: var(--radius-xl);
-  margin-bottom: var(--spacing-xl);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.filter-tabs {
-  display: flex;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-lg);
-  overflow-x: auto;
-}
-
-.filter-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  background: transparent;
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-full);
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.filter-tab:hover {
-  border-color: #667eea;
-  color: #667eea;
-}
-
-.filter-tab.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
-  color: white;
-}
-
-.tab-badge {
-  background: rgba(255, 255, 255, 0.3);
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
-}
-
-.filter-tab.active .tab-badge {
-  background: rgba(255, 255, 255, 0.4);
-}
-
-.search-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  background: var(--color-background);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-lg);
-}
-
-.search-bar svg {
-  color: var(--color-text-tertiary);
-}
-
-.search-input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: var(--font-size-md);
-}
-
-/* Loading State */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-3xl);
-  gap: var(--spacing-lg);
-}
-
-.loader {
-  width: 48px;
-  height: 48px;
-  border: 4px solid rgba(102, 126, 234, 0.2);
-  border-top-color: #667eea;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: var(--spacing-3xl);
-}
-
-.empty-state svg {
-  opacity: 0.3;
-  margin-bottom: var(--spacing-lg);
-}
-
-.empty-state h3 {
-  font-size: var(--font-size-xl);
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-sm);
-}
-
-.empty-state p {
-  color: var(--color-text-tertiary);
-}
-
-/* Notifications */
-.notifications-container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2xl);
-}
-
-.notification-group {
-  animation: fadeInUp 0.5s ease-out;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.group-label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-tertiary);
-  margin-bottom: var(--spacing-md);
-}
-
-.notifications-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-}
-
-.notification-card {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-lg);
-  background: var(--color-surface);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.notification-card:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-  transform: translateY(-2px);
-}
-
-.notification-card.unread {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-  border-color: #667eea;
-}
-
-.notification-icon {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #667eea;
-}
-
-.notification-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.notification-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-xs);
-}
-
-.notification-title {
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.notification-time {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
-  white-space: nowrap;
-}
-
-.notification-message {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  margin: 0 0 var(--spacing-xs) 0;
-  line-height: 1.5;
-}
-
-.priority-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  text-transform: uppercase;
-}
-
-.priority-high {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.priority-urgent {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.notification-actions {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.action-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: var(--color-text-tertiary);
-}
-
-.action-btn:hover {
-  background: #667eea;
-  border-color: #667eea;
-  color: white;
-}
-
-@media (max-width: 768px) {
-  .notifications-view {
-    padding: var(--spacing-md);
-  }
-
-  .page-header {
-    flex-direction: column;
-    gap: var(--spacing-lg);
-  }
-
-  .header-actions {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .filter-tabs {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-  }
-
-  .notification-card {
-    flex-direction: column;
-  }
-
-  .notification-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
-</style>
