@@ -182,6 +182,18 @@
             </li>
 
             <li class="sidebar__item" v-if="auth.isAuthenticated">
+              <router-link to="/meter-swap" class="sidebar__link" :class="{ 'sidebar__link--active': $route.path.startsWith('/meter-swap') }" @click="closeSidebarOnMobile">
+                <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="17 1 21 5 17 9"/>
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                  <polyline points="7 23 3 19 7 15"/>
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                </svg>
+                Meter Swap
+              </router-link>
+            </li>
+
+            <li class="sidebar__item" v-if="auth.isAuthenticated">
               <router-link to="/batch-report" class="sidebar__link" :class="{ 'sidebar__link--active': $route.path.startsWith('/batch-report') }" @click="closeSidebarOnMobile">
                 <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
