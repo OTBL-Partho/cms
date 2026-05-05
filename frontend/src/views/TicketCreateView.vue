@@ -9,100 +9,99 @@ export default {
 </script>
 
 <template>
-  <div class="ticket-create-view">
-    <!-- Page Header -->
-    <div class="page-header">
-      <div class="page-header__content">
-        <h1 class="page-header__title">Create New Ticket</h1>
-        <p class="page-header__subtitle">Fill in the details below to create a support ticket</p>
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 p-4 md:p-6 lg:p-8">
+
+    <!-- Header -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 rounded-3xl p-6 md:p-8 mb-6 shadow-2xl shadow-blue-200">
+      <div class="absolute -top-8 -right-8 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
+      <div class="absolute -bottom-8 -left-8 w-40 h-40 bg-violet-400/20 rounded-full blur-2xl"></div>
+      <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-3 mb-1">
+            <div class="w-11 h-11 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </div>
+            <h1 class="text-2xl md:text-3xl font-bold text-white">Create New Ticket</h1>
+          </div>
+          <p class="text-blue-200 text-sm ml-14">Fill in the details below to submit a support ticket</p>
+        </div>
+        <router-link to="/tickets" class="inline-flex items-center gap-2 px-4 py-2.5 bg-white/15 text-white font-semibold rounded-xl text-sm border border-white/30 hover:bg-white/25 hover:-translate-y-0.5 transition-all self-start md:self-auto">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back to Tickets
+        </router-link>
       </div>
-      <router-link to="/tickets" class="btn btn--outline-white">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-        Back to Tickets
-      </router-link>
     </div>
 
     <!-- Form Card -->
-    <div class="form-card">
-      <form @submit.prevent="createTicket" class="ticket-form">
+    <div class="bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/20 p-6 md:p-8">
+      <form @submit.prevent="createTicket" class="space-y-6">
 
-        <!-- Title Field (from Complaint Category) -->
-        <div class="form-group">
-          <label for="categoryId" class="form-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 6h16M4 12h16M4 18h16"/>
-            </svg>
-            Ticket Title (Select Category)
+        <!-- Category / Title -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+              Ticket Category (Title)
+            </span>
           </label>
           <select
-            class="form-select"
-            :class="{ 'is-invalid': titleError }"
-            id="categoryId"
             v-model.number="categoryId"
             @change="onCategoryChange"
+            :class="['w-full px-4 py-3 rounded-xl border-2 text-sm bg-white transition-all outline-none', titleError ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-indigo-400']"
           >
             <option :value="null">Select Ticket Category</option>
-            <option v-for="cat in complaintCategories" :key="cat.id" :value="cat.id">
-              {{ cat.name }}
-            </option>
+            <option v-for="cat in complaintCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
-          <div class="error-message" v-if="titleError">
+          <p v-if="titleError" class="mt-1 text-xs text-red-500 flex items-center gap-1">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12" stroke="white"/><line x1="12" y1="16" x2="12.01" y2="16" stroke="white"/></svg>
             {{ titleError }}
-          </div>
+          </p>
         </div>
 
-        <!-- Description Field -->
-        <div class="form-group">
-          <label for="description" class="form-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14,2 14,8 20,8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-              <polyline points="10,9 9,9 8,9"/>
-            </svg>
-            Description
-          </label>
-          <ckeditor
-            v-model="description"
-            :editor="editor"
-            :config="editorConfig"
-          />
-          <div class="error-message" v-if="descriptionError">
-            {{ descriptionError }}
-          </div>
-        </div>
-
-        <!-- Priority -->
-        <div class="form-group">
-          <label for="priority" class="form-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            Priority
-          </label>
-          <select class="form-select" id="priority" v-model="priority">
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-          </select>
-        </div>
-
-        <!-- Type and Severity Row -->
-        <div class="form-row">
-          <div class="form-group">
-            <label for="type" class="form-label">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 11l3 3L22 4"/>
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        <!-- Description -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
               </svg>
-              Type
+              Description
+            </span>
+          </label>
+          <div class="rounded-xl overflow-hidden border-2" :class="descriptionError ? 'border-red-400' : 'border-gray-200'">
+            <ckeditor v-model="description" :editor="editor" :config="editorConfig" />
+          </div>
+          <p v-if="descriptionError" class="mt-1 text-xs text-red-500">{{ descriptionError }}</p>
+        </div>
+
+        <!-- Priority + Type + Severity -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              <span class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Priority
+              </span>
             </label>
-            <select class="form-select" id="type" v-model="type">
+            <select v-model="priority" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-400 text-sm bg-white outline-none transition-all">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              <span class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                Type
+              </span>
+            </label>
+            <select v-model="type" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-400 text-sm bg-white outline-none transition-all">
               <option value="Task">Task</option>
               <option value="Bug">Bug</option>
               <option value="Story">Story</option>
@@ -112,17 +111,14 @@ export default {
               <option value="New Feature">New Feature</option>
             </select>
           </div>
-
-          <div class="form-group">
-            <label for="severity" class="form-label">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-              Severity
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              <span class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Severity
+              </span>
             </label>
-            <select class="form-select" id="severity" v-model="severity">
+            <select v-model="severity" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-400 text-sm bg-white outline-none transition-all">
               <option value="">None</option>
               <option value="Trivial">Trivial</option>
               <option value="Minor">Minor</option>
@@ -133,105 +129,80 @@ export default {
           </div>
         </div>
 
-        <!-- Project Row -->
-        <div class="form-group">
-          <label for="projectId" class="form-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 4h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
-            </svg>
-            Project <span class="required">*</span>
+        <!-- Project -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h7l2 2h7a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+              Project <span class="text-red-400">*</span>
+            </span>
           </label>
           <select
-            class="form-select"
-            :class="{ 'is-invalid': projectError }"
-            id="projectId"
             v-model.number="projectId"
             @change="onProjectChange"
+            :class="['w-full px-4 py-3 rounded-xl border-2 text-sm bg-white transition-all outline-none', projectError ? 'border-red-400' : 'border-gray-200 focus:border-indigo-400']"
           >
             <option :value="null">Select Project (Required)</option>
-            <option v-for="project in projects" :key="project.id" :value="project.id">
-              {{ project.name }} ({{ project.key }})
-            </option>
+            <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.name }} ({{ project.key }})</option>
           </select>
-          <div class="error-message" v-if="projectError">
-            {{ projectError }}
-          </div>
-          <small class="form-hint" v-if="projects.length === 0 && !loadingProjects">
-            No projects available. Please contact your administrator.
-          </small>
+          <p v-if="projectError" class="mt-1 text-xs text-red-500">{{ projectError }}</p>
+          <p v-if="projects.length === 0 && !loadingProjects" class="mt-1 text-xs text-gray-400 italic">No projects available. Please contact your administrator.</p>
         </div>
 
         <!-- Assignee -->
-        <div class="form-group">
-          <label for="assigneeId" class="form-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-            Assignee
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Assignee
+            </span>
           </label>
-          <select class="form-select" id="assigneeId" v-model.number="assigneeId" :disabled="!projectId">
+          <select v-model.number="assigneeId" :disabled="!projectId" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-400 text-sm bg-white outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed">
             <option :value="null">{{ projectId ? 'Select Assignee (Optional)' : 'Select a project first' }}</option>
             <option v-for="user in (projectMembers.length > 0 ? projectMembers : users)" :key="user.id" :value="user.id">
               {{ user.fullName || user.username || user.email }}
             </option>
           </select>
-          <small class="form-hint" v-if="projectId && projectMembers.length > 0">
-            Showing project members only
-          </small>
+          <p v-if="projectId && projectMembers.length > 0" class="mt-1 text-xs text-gray-400 italic">Showing project members only</p>
         </div>
 
-        <!-- File Upload Section -->
-        <div class="form-group file-upload-group">
-          <label class="file-upload-label">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
-            </svg>
-            Attach Files (Optional)
+        <!-- File Upload -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Attach Files (Optional)
+            </span>
           </label>
-          <input
-            type="file"
-            ref="fileInput"
-            @change="handleFileChange"
-            multiple
-            class="file-input"
-            accept="image/*,.pdf,.doc,.docx,.txt"
-          />
-          <div v-if="attachedFiles.length > 0" class="file-list">
-            <div v-for="(file, index) in attachedFiles" :key="index" class="file-item">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-                <polyline points="13 2 13 9 20 9"/>
-              </svg>
-              <span class="file-name">{{ file.name }}</span>
-              <span class="file-size">({{ formatFileSize(file.size) }})</span>
-              <button type="button" @click="removeFile(index)" class="remove-file-btn">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
+          <label class="block border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all">
+            <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <p class="text-sm text-gray-500">Click to upload files</p>
+            <p class="text-xs text-gray-400 mt-1">Images, PDF, DOC, TXT</p>
+            <input type="file" ref="fileInput" @change="handleFileChange" multiple class="hidden" accept="image/*,.pdf,.doc,.docx,.txt" />
+          </label>
+          <div v-if="attachedFiles.length > 0" class="mt-3 space-y-2">
+            <div v-for="(file, index) in attachedFiles" :key="index"
+              class="flex items-center gap-3 px-3 py-2 bg-indigo-50 rounded-xl border border-indigo-100">
+              <svg class="w-4 h-4 text-indigo-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+              <span class="text-xs font-medium text-gray-700 flex-1 truncate">{{ file.name }}</span>
+              <span class="text-xs text-gray-400">{{ formatFileSize(file.size) }}</span>
+              <button type="button" @click="removeFile(index)" class="text-red-400 hover:text-red-600 transition-colors">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Form Actions -->
-        <div class="form-actions">
-          <button type="submit" class="btn btn--primary" :disabled="isSubmitting">
-            <svg v-if="!isSubmitting" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 11l3 3L22 4"/>
-              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-            </svg>
-            <div v-else class="spinner"></div>
+        <!-- Actions -->
+        <div class="flex gap-3 pt-4 border-t border-gray-100">
+          <button type="submit" :disabled="isSubmitting"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+            <svg v-if="!isSubmitting" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
             {{ isSubmitting ? 'Creating...' : 'Create Ticket' }}
           </button>
-          <router-link to="/tickets" class="btn btn--outline">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
+          <router-link to="/tickets" class="inline-flex items-center gap-2 px-6 py-3 border-2 border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:border-gray-300 hover:bg-gray-50 transition-all">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             Cancel
           </router-link>
         </div>
@@ -301,7 +272,6 @@ const editorConfig = {
 };
 
 const onCategoryChange = () => {
-  // Set title to selected category name
   if (categoryId.value) {
     const selectedCategory = complaintCategories.value.find(cat => cat.id === categoryId.value);
     if (selectedCategory) {
@@ -313,9 +283,8 @@ const onCategoryChange = () => {
 };
 
 const onProjectChange = async () => {
-  // Fetch project members when project is selected
   projectError.value = '';
-  assigneeId.value = null; // Reset assignee
+  assigneeId.value = null;
   projectMembers.value = [];
 
   if (projectId.value) {
@@ -328,15 +297,13 @@ const onProjectChange = async () => {
   }
 };
 
-// Fetch data on component mount
 onMounted(async () => {
   try {
     loadingProjects.value = true;
 
-    // Fetch all required data in parallel
     const [usersRes, projectsRes, categoriesRes] = await Promise.all([
       apiClient.get('/users'),
-      apiClient.get('/projects/my-projects'), // Fetch only user's assigned projects
+      apiClient.get('/projects/my-projects'),
       apiClient.get('/complaint-categories')
     ]);
 
@@ -344,7 +311,6 @@ onMounted(async () => {
     projects.value = projectsRes.data;
     complaintCategories.value = categoriesRes.data;
 
-    // Auto-select project if user has only one
     if (projects.value.length === 1) {
       projectId.value = projects.value[0].id;
       await onProjectChange();
@@ -434,7 +400,6 @@ const createTicket = async () => {
       formData.append('projectId', projectId.value.toString());
     }
 
-    // Append files if any
     attachedFiles.value.forEach((file) => {
       formData.append('files', file);
     });
@@ -459,405 +424,8 @@ const createTicket = async () => {
 </script>
 
 <style scoped>
-/* General Styles */
-.ticket-create-view {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: var(--spacing-xl);
-  min-height: 100vh;
-  background-color: var(--color-background);
-}
-
-/* Page Header */
-.page-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: var(--spacing-2xl) var(--spacing-3xl);
-  border-radius: var(--radius-2xl);
-  margin-bottom: var(--spacing-2xl);
-  box-shadow: 0 20px 25px -5px rgba(102, 126, 234, 0.3), 0 10px 10px -5px rgba(118, 75, 162, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-  overflow: hidden;
-  animation: slideInDown 0.5s ease-out;
-}
-
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.page-header::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -10%;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-  border-radius: 50%;
-}
-
-.page-header__content {
-  z-index: 1;
-}
-
-.page-header__title {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-black);
-  margin-bottom: var(--spacing-sm);
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-  letter-spacing: -0.025em;
-}
-
-.page-header__subtitle {
-  font-size: var(--font-size-lg);
-  opacity: 0.95;
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  margin: 0;
-}
-
-.btn--outline-white {
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  color: white;
-  backdrop-filter: blur(10px);
-  z-index: 1;
-}
-
-.btn--outline-white:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: white;
-  color: white;
-}
-
-/* Form Card */
-.form-card {
-  background: var(--color-surface);
-  border-radius: var(--radius-2xl);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  padding: var(--spacing-3xl);
-  border: 1px solid var(--color-border);
-  animation: fadeInUp 0.6s ease-out;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Form Styles */
-.ticket-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xl);
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.form-label {
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  letter-spacing: 0.025em;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.form-label svg {
-  color: #667eea;
-}
-
-.form-control,
-.form-select {
-  padding: var(--spacing-md) var(--spacing-lg);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-base);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-}
-
-.form-control:focus,
-.form-select:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-  outline: none;
-}
-
-.form-control.is-invalid {
-  border-color: #ef4444;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-xl);
-}
-
-.error-message {
-  color: #ef4444;
-  font-size: var(--font-size-sm);
-  margin-top: var(--spacing-xs);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
-/* Form Actions */
-.form-actions {
-  display: flex;
-  gap: var(--spacing-md);
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--color-border);
-}
-
-.btn {
-  padding: var(--spacing-md) var(--spacing-xl);
-  border-radius: var(--radius-lg);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.025em;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: none;
-  cursor: pointer;
-  font-size: var(--font-size-base);
-}
-
-.btn--primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.btn--primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #5568d3 0%, #63408b 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.4);
-}
-
-.btn--primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-.btn--outline {
-  background: transparent;
-  border: 2px solid var(--color-border);
-  color: var(--color-text-primary);
-}
-
-.btn--outline:hover {
-  background: var(--color-surface-hover);
-  border-color: #667eea;
-  color: #667eea;
-}
-
-/* Spinner */
-.spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Form Hints */
-.form-hint {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
-  margin-top: var(--spacing-xs);
-  font-style: italic;
-  display: block;
-}
-
-/* Required Field Indicator */
-.required {
-  color: #ef4444;
-  margin-left: 0.25rem;
-}
-
-/* CKEditor Customization */
 :deep(.ck-editor__editable) {
-  min-height: 300px;
-  max-height: 500px;
-}
-
-:deep(.ck.ck-toolbar) {
-  border-top-left-radius: var(--radius-lg);
-  border-top-right-radius: var(--radius-lg);
-  background: var(--color-surface-soft);
-}
-
-:deep(.ck.ck-editor__main > .ck-editor__editable) {
-  background: var(--color-surface);
-  border-bottom-left-radius: var(--radius-lg);
-  border-bottom-right-radius: var(--radius-lg);
-}
-
-/* File Upload Section */
-.file-upload-group {
-  margin-top: var(--spacing-xl);
-}
-
-.file-upload-label {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-sm);
-  cursor: pointer;
-}
-
-.file-upload-label svg {
-  color: #667eea;
-}
-
-.file-input {
-  display: block;
-  width: 100%;
-  padding: var(--spacing-md);
-  border: 2px dashed var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: var(--font-size-sm);
-}
-
-.file-input:hover {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.05);
-}
-
-.file-list {
-  margin-top: var(--spacing-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.file-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-}
-
-.file-item svg {
-  color: #667eea;
-  flex-shrink: 0;
-}
-
-.file-name {
-  flex: 1;
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-medium);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.file-size {
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
-}
-
-.remove-file-btn {
-  background: none;
-  border: none;
-  color: #ef4444;
-  cursor: pointer;
-  padding: var(--spacing-xs);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
-}
-
-.remove-file-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .ticket-create-view {
-    padding: var(--spacing-md);
-  }
-
-  .page-header {
-    flex-direction: column;
-    gap: var(--spacing-lg);
-    padding: var(--spacing-xl);
-    align-items: flex-start;
-  }
-
-  .page-header__title {
-    font-size: var(--font-size-2xl);
-  }
-
-  .form-card {
-    padding: var(--spacing-xl);
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .form-actions {
-    flex-direction: column;
-  }
-
-  .btn {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .page-header__title {
-    font-size: var(--font-size-xl);
-  }
-
-  .form-card {
-    padding: var(--spacing-lg);
-  }
+  min-height: 280px;
+  max-height: 480px;
 }
 </style>
