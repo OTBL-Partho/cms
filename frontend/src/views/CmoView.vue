@@ -239,49 +239,64 @@
     </div>
 
     <!-- Action Bar -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-      <div class="text-sm text-gray-600">
-        <span v-if="pagination">
-          Showing {{ cmos.length }} of {{ pagination.total }} records — Page {{ pagination.page }} of {{ pagination.totalPages }}
-        </span>
+    <div class="flex flex-col gap-3 mb-6">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="text-sm text-gray-600">
+          <span v-if="pagination">
+            Showing {{ cmos.length }} of {{ pagination.total }} records — Page {{ pagination.page }} of {{ pagination.totalPages }}
+          </span>
+        </div>
+        <div class="flex gap-3 flex-wrap">
+          <button
+            v-if="auth.isSuperAdmin || auth.isAdmin"
+            @click="showEditModal = true"
+            class="group px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit Customer
+          </button>
+          <button
+            @click="showUploadModal = true"
+            class="group px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Add Customer Info
+          </button>
+          <button
+            @click="runMDMCheck"
+            :disabled="checkingMDM"
+            class="group px-4 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          >
+            <svg v-if="!checkingMDM" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            <svg v-else class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke-width="2" stroke-dasharray="31.4" stroke-dashoffset="10" />
+            </svg>
+            {{ checkingMDM ? 'Checking MDM...' : 'Check MDM Entry' }}
+          </button>
+          <button
+            @click="exportToExcel"
+            :disabled="cmos.length === 0 || exporting"
+            class="group px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          >
+            <svg v-if="!exporting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14,2 14,8 20,8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+            </svg>
+            <svg v-else class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke-width="2" stroke-dasharray="31.4" stroke-dashoffset="10" />
+            </svg>
+            {{ exporting ? 'Exporting...' : 'Export Excel' }}
+          </button>
+        </div>
       </div>
-      <div class="flex gap-3 flex-wrap">
-        <button
-          @click="showUploadModal = true"
-          class="group px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Add Customer Info
-        </button>
-        <button
-          @click="runMDMCheck"
-          :disabled="checkingMDM"
-          class="group px-4 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-        >
-          <svg v-if="!checkingMDM" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-          </svg>
-          <svg v-else class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" stroke-width="2" stroke-dasharray="31.4" stroke-dashoffset="10" />
-          </svg>
-          {{ checkingMDM ? 'Checking MDM...' : 'Check MDM Entry' }}
-        </button>
-        <button
-          @click="exportToExcel"
-          :disabled="cmos.length === 0 || exporting"
-          class="group px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-        >
-          <svg v-if="!exporting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-            <polyline points="14,2 14,8 20,8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-          </svg>
-          <svg v-else class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" stroke-width="2" stroke-dasharray="31.4" stroke-dashoffset="10" />
-          </svg>
-          {{ exporting ? 'Exporting...' : 'Export Excel' }}
-        </button>
+      <!-- Second row: Refresh right-aligned -->
+      <div class="flex justify-end">
         <button
           @click="refresh"
           :disabled="loading"
@@ -381,7 +396,7 @@
                 <span v-if="cmo.IsMDMEntry" class="text-green-600 font-medium">Yes</span>
                 <span v-else class="text-gray-400">No</span>
               </td>
-              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ (cmo as any).MobileNo || '-' }}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ (cmo as any).CustomerMobile || (cmo as any).MobileNo || '-' }}</td>
               <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ (cmo as any).ChangedMobileNo || '-' }}</td>
               <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ (cmo as any).SecondaryMobileNo || '-' }}</td>
               <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ cmo.Latitude || '-' }}</td>
@@ -609,12 +624,163 @@
       </div>
     </div>
   </div>
+
+  <!-- Edit Customer Modal: Step 1 — Search -->
+  <div v-if="showEditModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fadeIn">
+      <div class="flex items-center justify-between p-6 border-b border-gray-200">
+        <div>
+          <h2 class="text-xl font-bold text-gray-800">Edit Customer</h2>
+          <p class="text-sm text-gray-500 mt-1">Enter Customer No. or New Meter No. to search</p>
+        </div>
+        <button @click="closeEditModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="p-6">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Customer No. or New Meter No.</label>
+          <input
+            v-model="editSearchQuery"
+            @keyup.enter="searchForEdit"
+            type="text"
+            placeholder="e.g. 35381011 or meter number"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all"
+          />
+        </div>
+        <p v-if="editSearchError" class="text-red-500 text-sm mb-4">{{ editSearchError }}</p>
+        <div class="flex gap-3">
+          <button @click="closeEditModal" class="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-all">Cancel</button>
+          <button
+            @click="searchForEdit"
+            :disabled="searchingEdit"
+            class="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <svg v-if="searchingEdit" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke-width="2" stroke-dasharray="31.4" stroke-dashoffset="10" />
+            </svg>
+            {{ searchingEdit ? 'Searching...' : 'Search' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Customer Modal: Step 2 — Edit Form -->
+  <div v-if="showEditFormModal && editRecord" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-fadeIn">
+      <div class="flex items-center justify-between p-6 border-b border-gray-200 shrink-0">
+        <div>
+          <h2 class="text-xl font-bold text-gray-800">Edit Customer Record</h2>
+          <p class="text-sm text-gray-500 mt-1">Customer No: <span class="font-medium text-gray-700">{{ editRecord.OldConsumerId }}</span></p>
+        </div>
+        <button @click="closeEditFormModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Customer Name</label>
+            <input v-model="editForm.CustomerName" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Address</label>
+            <input v-model="editForm.CustomerAddress" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Mobile</label>
+            <input v-model="editForm.CustomerMobile" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Changed Mobile</label>
+            <input v-model="editForm.ChangedMobileNo" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Secondary Mobile</label>
+            <input v-model="editForm.SecondaryMobileNo" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">New Meter No.</label>
+            <input v-model="editForm.NewMeterNoOCR" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Latitude</label>
+            <input v-model="editForm.Latitude" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Longitude</label>
+            <input v-model="editForm.Longitude" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none text-sm" />
+          </div>
+        </div>
+      </div>
+      <div class="p-6 border-t border-gray-200 flex gap-3 shrink-0">
+        <button @click="closeEditFormModal" class="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-all">Cancel</button>
+        <button @click="showEditConfirmModal = true" class="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all">Review & Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Customer Modal: Step 3 — Confirm Diff -->
+  <div v-if="showEditConfirmModal && editRecord" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col animate-fadeIn">
+      <div class="flex items-center justify-between p-6 border-b border-gray-200 shrink-0">
+        <div>
+          <h2 class="text-xl font-bold text-gray-800">Confirm Changes</h2>
+          <p class="text-sm text-gray-500 mt-1">Review what will be updated</p>
+        </div>
+        <button @click="showEditConfirmModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto">
+        <div v-if="editDiff.length === 0" class="text-center text-gray-500 py-4">No changes made.</div>
+        <div v-else class="space-y-3">
+          <div v-for="diff in editDiff" :key="diff.field" class="bg-gray-50 rounded-xl p-4">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{{ diff.label }}</p>
+            <div class="flex gap-3 text-sm">
+              <div class="flex-1">
+                <p class="text-xs text-red-500 font-medium mb-1">Before</p>
+                <p class="text-gray-700 bg-red-50 px-2 py-1 rounded">{{ diff.old || '—' }}</p>
+              </div>
+              <div class="flex-1">
+                <p class="text-xs text-green-500 font-medium mb-1">After</p>
+                <p class="text-gray-700 bg-green-50 px-2 py-1 rounded">{{ diff.new || '—' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="p-6 border-t border-gray-200 flex gap-3 shrink-0">
+        <button @click="showEditConfirmModal = false" class="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-all">Back</button>
+        <button
+          @click="submitEdit"
+          :disabled="editDiff.length === 0 || submittingEdit"
+          class="flex-1 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          <svg v-if="submittingEdit" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke-width="2" stroke-dasharray="31.4" stroke-dashoffset="10" />
+          </svg>
+          {{ submittingEdit ? 'Saving...' : 'Confirm Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { getCMOs, getCMOStatistics, checkMDMEntry, getCMOExportData, getCMOFilterOptions, uploadCustomerInfo } from '../api';
 import * as XLSX from 'xlsx';
+import { useAuthStore } from '../stores/auth';
+
+const auth = useAuthStore();
 
 interface CMORecord {
   Id: number;
@@ -674,6 +840,132 @@ const uploadPreviewData = ref<any[]>([]);
 const uploadFileName = ref('');
 const uploadResult = ref<{ inserted: number; skipped: number; errors: string[] } | null>(null);
 const uploadProgress = ref<{ current: number; total: number } | null>(null);
+
+// Edit Customer state
+const showEditModal = ref(false);
+const showEditFormModal = ref(false);
+const showEditConfirmModal = ref(false);
+const editSearchQuery = ref('');
+const editSearchError = ref('');
+const editRecord = ref<CMORecord | null>(null);
+const submittingEdit = ref(false);
+const searchingEdit = ref(false);
+
+
+const editForm = ref({
+  CustomerName: '',
+  CustomerAddress: '',
+  CustomerMobile: '',
+  ChangedMobileNo: '',
+  SecondaryMobileNo: '',
+  NewMeterNoOCR: '',
+  Latitude: '',
+  Longitude: ''
+});
+
+const editableFields = [
+  { field: 'CustomerName', label: 'Customer Name' },
+  { field: 'CustomerAddress', label: 'Address' },
+  { field: 'CustomerMobile', label: 'Mobile' },
+  { field: 'ChangedMobileNo', label: 'Changed Mobile' },
+  { field: 'SecondaryMobileNo', label: 'Secondary Mobile' },
+  { field: 'NewMeterNoOCR', label: 'New Meter No.' },
+  { field: 'Latitude', label: 'Latitude' },
+  { field: 'Longitude', label: 'Longitude' }
+];
+
+const editDiff = computed(() => {
+  if (!editRecord.value) return [];
+  return editableFields
+    .filter(({ field }) => {
+      const oldVal = String((editRecord.value as any)[field] || '');
+      const newVal = String((editForm.value as any)[field] || '');
+      return oldVal !== newVal;
+    })
+    .map(({ field, label }) => ({
+      field,
+      label,
+      old: String((editRecord.value as any)[field] || ''),
+      new: String((editForm.value as any)[field] || '')
+    }));
+});
+
+const searchForEdit = async () => {
+  editSearchError.value = '';
+  const q = editSearchQuery.value.trim();
+  if (!q) { editSearchError.value = 'Please enter a Customer No. or Meter No.'; return; }
+
+  searchingEdit.value = true;
+  try {
+    const response = await getCMOs({ search: q, limit: 50, page: 1 });
+    const records: CMORecord[] = response.data?.data || [];
+
+    const found = records.find(c =>
+      (c.OldConsumerId || '').toLowerCase() === q.toLowerCase() ||
+      (c.NewMeterNoOCR || '').toLowerCase() === q.toLowerCase()
+    );
+
+    if (!found) { editSearchError.value = 'No exact match found for that Customer No. or Meter No.'; return; }
+
+    if (found.IsMDMEntry) { editSearchError.value = 'This customer already has MDM Entry done and cannot be edited.'; return; }
+
+    editRecord.value = found;
+    editForm.value = {
+      CustomerName: (found as any).CustomerName || '',
+      CustomerAddress: (found as any).CustomerAddress || '',
+      CustomerMobile: (found as any).CustomerMobile || '',
+      ChangedMobileNo: (found as any).ChangedMobileNo || '',
+      SecondaryMobileNo: (found as any).SecondaryMobileNo || '',
+      NewMeterNoOCR: found.NewMeterNoOCR || '',
+      Latitude: found.Latitude || '',
+      Longitude: found.Longitude || ''
+    };
+    showEditModal.value = false;
+    showEditFormModal.value = true;
+  } catch (err: any) {
+    editSearchError.value = err.response?.data?.message || err.message || 'Search failed';
+  } finally {
+    searchingEdit.value = false;
+  }
+};
+
+const submitEdit = async () => {
+  if (!editRecord.value || editDiff.value.length === 0) return;
+  submittingEdit.value = true;
+  try {
+    // TODO: replace with real API call when Mominul adds PUT /cmo/:id
+    // await updateCMO(editRecord.value.Id, editForm.value);
+    await new Promise(resolve => setTimeout(resolve, 800)); // mock delay
+
+    // Update local record so table reflects changes immediately
+    const idx = cmos.value.findIndex(c => c.Id === editRecord.value!.Id);
+    if (idx !== -1) {
+      cmos.value[idx] = { ...cmos.value[idx], ...editForm.value } as CMORecord;
+    }
+
+    showEditConfirmModal.value = false;
+    showEditFormModal.value = false;
+    editRecord.value = null;
+    editSearchQuery.value = '';
+    alert('✓ Record updated successfully. (Note: changes are local until CMO API update endpoint is available)');
+  } catch (err: any) {
+    alert(err.response?.data?.message || err.message || 'Failed to update record');
+  } finally {
+    submittingEdit.value = false;
+  }
+};
+
+
+const closeEditModal = () => {
+  showEditModal.value = false;
+  editSearchQuery.value = '';
+  editSearchError.value = '';
+};
+
+const closeEditFormModal = () => {
+  showEditFormModal.value = false;
+  showEditModal.value = true;
+};
 
 const filters = ref({
   search: '',

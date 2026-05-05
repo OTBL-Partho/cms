@@ -54,24 +54,14 @@ const getCmoApiToken = async () => {
   return loginPromise;
 };
 
-/**
- * GET /api/cmo — Proxy to CMO API GET /api/cmo
- * Passes query params: page, limit, status, search, sortBy, sortOrder
- */
-const hasNoContact = (r) => {
-  const mobile    = r.MobileNo          ? String(r.MobileNo).trim()          : '';
-  const changed   = r.ChangedMobileNo   ? String(r.ChangedMobileNo).trim()   : '';
-  const secondary = r.SecondaryMobileNo ? String(r.SecondaryMobileNo).trim() : '';
-  return !mobile && !changed && !secondary;
-};
-
 exports.getCMOs = async (req, res) => {
   try {
     const token = await getCmoApiToken();
-    const { page, limit, isApproved, search, sortBy, sortOrder, nocs, dateFrom, dateTo, isMDMEntry, cpcCpr, noContact } = req.query;
+    const { page, limit, isApproved, search, sortBy, sortOrder, nocs, dateFrom, dateTo, isMDMEntry, cpcCpr } = req.query;
 
-    // Build params for the external CMO API (never pass noContact — it doesn't support it)
     const params = {};
+    if (page) params.page = page;
+    if (limit) params.limit = limit;
     if (isApproved !== undefined && isApproved !== '') params.isApproved = isApproved;
     if (search) params.search = search;
     if (sortBy) params.sortBy = sortBy;
@@ -82,35 +72,6 @@ exports.getCMOs = async (req, res) => {
     if (isMDMEntry !== undefined && isMDMEntry !== '') params.isMDMEntry = isMDMEntry;
     if (cpcCpr !== undefined && cpcCpr !== '') params.cpcCpr = cpcCpr;
 
-    // noContact=1 — the external API doesn't support this filter, so we fetch all
-    // matching records, filter in-memory, then paginate ourselves.
-    if (noContact === '1') {
-      const pageNum  = parseInt(page)  || 1;
-      const limitNum = parseInt(limit) || 20;
-
-      const response = await axios.get(`${CMO_API_URL}/cmo/cms-list`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { ...params, page: 1, limit: 500000 },
-        timeout: 120000
-      });
-
-      const all      = response.data?.data || [];
-      const filtered = all.filter(hasNoContact);
-      const total      = filtered.length;
-      const totalPages = Math.ceil(total / limitNum) || 1;
-      const start      = (pageNum - 1) * limitNum;
-
-      return res.json({
-        success: true,
-        data: filtered.slice(start, start + limitNum),
-        pagination: { page: pageNum, limit: limitNum, total, totalPages }
-      });
-    }
-
-    // Normal flow — pass pagination straight through
-    params.page  = page;
-    params.limit = limit;
-
     const response = await axios.get(`${CMO_API_URL}/cmo/cms-list`, {
       headers: { Authorization: `Bearer ${token}` },
       params,
@@ -120,6 +81,7 @@ exports.getCMOs = async (req, res) => {
     return res.json(response.data);
   } catch (error) {
     console.error('CMO proxy error:', error.response?.data || error.message);
+    // If auth failed, clear token so next request retries login
     if (error.response?.status === 401) {
       cachedToken = null;
       tokenExpiry = null;
@@ -254,7 +216,7 @@ exports.checkMDMEntry = async (req, res) => {
 exports.exportCMOData = async (req, res) => {
   try {
     const token = await getCmoApiToken();
-    const { search, isApproved, nocs, dateFrom, dateTo, isMDMEntry, cpcCpr, noContact } = req.query;
+    const { search, isApproved, nocs, dateFrom, dateTo, isMDMEntry, cpcCpr } = req.query;
 
     const params = {};
     if (search) params.search = search;
@@ -270,17 +232,6 @@ exports.exportCMOData = async (req, res) => {
       params,
       timeout: 60000
     });
-
-    if (noContact === '1') {
-      const all      = response.data?.data || [];
-      const filtered = all.filter(r => {
-        const mobile    = r.MOBILE_NO          ? String(r.MOBILE_NO).trim()          : '';
-        const changed   = r.CHANGED_MOBILE_NO  ? String(r.CHANGED_MOBILE_NO).trim()  : '';
-        const secondary = r.SECONDARY_MOBILE_NO ? String(r.SECONDARY_MOBILE_NO).trim() : '';
-        return !mobile && !changed && !secondary;
-      });
-      return res.json({ ...response.data, data: filtered });
-    }
 
     return res.json(response.data);
   } catch (error) {
