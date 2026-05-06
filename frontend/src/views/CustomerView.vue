@@ -371,25 +371,44 @@
           </div>
 
           <!-- Result Banner -->
-          <div v-if="uploadResult" style="margin-top:1rem;padding:1rem;border-radius:0.75rem;" :style="uploadResult.success ? 'background:#f0fdf4;border:1px solid #bbf7d0;' : 'background:#fef2f2;border:1px solid #fecaca;'">
-            <p style="font-weight:600;margin:0;" :style="uploadResult.success ? 'color:#15803d;' : 'color:#dc2626;'">
+          <div v-if="uploadResult" style="margin-top:1rem;padding:1rem;border-radius:0.75rem;" :style="uploadResult.success ? (uploadResult.errors?.length ? 'background:#fffbeb;border:1px solid #fde68a;' : 'background:#f0fdf4;border:1px solid #bbf7d0;') : 'background:#fef2f2;border:1px solid #fecaca;'">
+            <p style="font-weight:600;margin:0;" :style="uploadResult.success ? (uploadResult.errors?.length ? 'color:#92400e;' : 'color:#15803d;') : 'color:#dc2626;'">
               {{ uploadResult.success ? 'Upload Complete' : 'Upload Failed' }}
             </p>
-            <p style="font-size:0.875rem;margin:0.25rem 0 0 0;" :style="uploadResult.success ? 'color:#16a34a;' : 'color:#ef4444;'">
-              {{ uploadResult.message }}
+            <p v-if="uploadResult.success" style="font-size:0.875rem;margin:0.25rem 0 0 0;" :style="uploadResult.errors?.length ? 'color:#b45309;' : 'color:#16a34a;'">
+              Inserted: {{ uploadResult.inserted }} | Skipped (duplicates): {{ uploadResult.skipped }}<span v-if="uploadResult.errors?.length"> | Errors: {{ uploadResult.errors.length }}</span>
             </p>
+            <p v-else style="font-size:0.875rem;margin:0.25rem 0 0 0;color:#ef4444;">{{ uploadResult.message }}</p>
+            <div v-if="uploadResult.errors?.length" style="margin-top:0.5rem;">
+              <p v-for="(err, i) in uploadResult.errors" :key="i" style="font-size:0.75rem;color:#b45309;margin:0.1rem 0;">{{ err }}</p>
+            </div>
           </div>
         </div>
 
         <!-- Footer -->
         <div style="padding:1.5rem;border-top:1px solid #e5e7eb;">
-          <div style="display:flex;align-items:center;justify-content:flex-end;gap:0.75rem;">
+          <!-- Progress Bar -->
+          <div v-if="uploading" style="margin-bottom:1rem;">
+            <div style="display:flex;justify-content:space-between;font-size:0.875rem;color:#6b7280;margin-bottom:0.25rem;">
+              <span>{{ uploadProgress < 100 ? 'Uploading file...' : 'Processing...' }}</span>
+              <span>{{ uploadProgress }}%</span>
+            </div>
+            <div style="width:100%;background:#e5e7eb;border-radius:9999px;height:0.5rem;">
+              <div style="background:linear-gradient(to right,#6366f1,#7c3aed);height:0.5rem;border-radius:9999px;transition:width 0.3s ease;" :style="{ width: `${uploadProgress}%` }"></div>
+            </div>
+          </div>
+          <!-- After upload done: show Exit only -->
+          <div v-if="uploadResult" style="display:flex;align-items:center;justify-content:flex-end;">
+            <button @click="closeUploadModal" class="btn btn-danger">Exit</button>
+          </div>
+          <!-- Before upload done: Cancel + Confirm -->
+          <div v-else style="display:flex;align-items:center;justify-content:flex-end;gap:0.75rem;">
             <button @click="closeUploadModal" :disabled="uploading" class="btn btn-outline">Cancel</button>
             <button @click="confirmUpload" :disabled="!uploadPreviewData.length || uploading" class="btn btn-primary" style="background:linear-gradient(to right,#4f46e5,#7c3aed);border:none;">
               <svg v-if="uploading" style="width:1rem;height:1rem;animation:spin 1s linear infinite;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" stroke-width="2" stroke-dasharray="31.4" stroke-dashoffset="10" />
               </svg>
-              {{ uploading ? 'Uploading...' : 'Confirm Upload' }}
+              {{ uploading ? `Uploading... (${uploadProgress}%)` : 'Confirm Upload' }}
             </button>
           </div>
         </div>
@@ -436,7 +455,8 @@ const showUploadModal = ref(false);
 const uploadPreviewData = ref<any[]>([]);
 const uploadFileName = ref('');
 const uploading = ref(false);
-const uploadResult = ref<{ success: boolean; message: string } | null>(null);
+const uploadProgress = ref<number>(0);
+const uploadResult = ref<{ success: boolean; inserted?: number; skipped?: number; errors?: string[]; message?: string } | null>(null);
 const selectedFile = ref<File | null>(null);
 const billStatusSummary = ref<BillStatusSummary>({
   billStart: 0,
@@ -480,6 +500,7 @@ const clearUploadPreview = () => {
   uploadPreviewData.value = [];
   uploadFileName.value = '';
   uploadResult.value = null;
+  uploadProgress.value = 0;
   selectedFile.value = null;
 };
 
@@ -491,14 +512,26 @@ const closeUploadModal = () => {
 const confirmUpload = async () => {
   if (!selectedFile.value) return;
   uploading.value = true;
+  uploadProgress.value = 0;
   uploadResult.value = null;
   const formData = new FormData();
   formData.append('file', selectedFile.value);
   try {
-    await apiClient.post('/customers/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+    const response = await apiClient.post('/customers/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          uploadProgress.value = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+        }
+      }
     });
-    uploadResult.value = { success: true, message: `${uploadPreviewData.value.length} records uploaded successfully.` };
+    uploadProgress.value = 100;
+    uploadResult.value = {
+      success: true,
+      inserted: response.data.inserted,
+      skipped: response.data.skipped,
+      errors: response.data.errors,
+    };
   } catch (error: any) {
     console.error('Error uploading customers:', error);
     uploadResult.value = { success: false, message: error.response?.data || error.message || 'Upload failed.' };

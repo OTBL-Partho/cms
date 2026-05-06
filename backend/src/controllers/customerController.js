@@ -14,7 +14,6 @@ const uploadCustomers = async (req, res) => {
     const worksheet = workbook.Sheets[sheetName];
     const customers = xlsx.utils.sheet_to_json(worksheet, { raw: false, dateNF: 'dd-mmm-yyyy' });
 
-    // Map the Excel data to the model fields
     const customerData = customers.map(customer => ({
       NOCS_NAME: customer.NOCS_NAME,
       CUSTOMER_NUM: customer.CUSTOMER_NUM,
@@ -31,9 +30,29 @@ const uploadCustomers = async (req, res) => {
       FEEDER_NAME: customer.FEEDER_NAME,
     }));
 
-    await Customer.bulkCreate(customerData, { updateOnDuplicate: ['CUSTOMER_NUM'] });
+    const incomingNums = customerData.map(c => c.CUSTOMER_NUM).filter(Boolean);
+    const existing = await Customer.findAll({
+      attributes: ['CUSTOMER_NUM'],
+      where: { CUSTOMER_NUM: incomingNums },
+    });
+    const existingSet = new Set(existing.map(c => c.CUSTOMER_NUM));
 
-    res.status(200).send('Customer data uploaded successfully.');
+    const errors = [];
+    const validData = [];
+    for (const row of customerData) {
+      if (!row.CUSTOMER_NUM) {
+        errors.push(`Row skipped: missing CUSTOMER_NUM`);
+        continue;
+      }
+      validData.push(row);
+    }
+
+    const newData = validData.filter(c => !existingSet.has(c.CUSTOMER_NUM));
+    const skipped = validData.filter(c => existingSet.has(c.CUSTOMER_NUM)).length;
+
+    await Customer.bulkCreate(newData, { ignoreDuplicates: true });
+
+    res.status(200).json({ inserted: newData.length, skipped, errors, total: customers.length });
   } catch (error) {
     console.error('Error uploading customer data:', error);
     res.status(500).send('An error occurred while uploading customer data.');
