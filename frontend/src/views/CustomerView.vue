@@ -60,14 +60,25 @@
     <!-- Action Bar -->
     <div class="action-bar">
       <div class="action-group">
-        <button class="btn btn-primary" @click="showUploadModal = true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7,10 12,15 17,10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Upload Customers
-        </button>
+        <div class="file-upload-group">
+          <input type="file" id="file-upload" class="file-input" @change="handleFileUpload" accept=".xlsx, .xls">
+          <label for="file-upload" class="file-upload-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7,10 12,15 17,10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Upload Customers
+          </label>
+          <button class="btn btn-primary" @click="uploadFile" :disabled="!file">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7,10 12,15 17,10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Upload
+          </button>
+        </div>
         <button class="btn btn-danger" @click="deleteAllCustomers">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="3,6 5,6 21,6"/>
@@ -279,122 +290,6 @@
         </li>
       </ul>
     </nav>
-
-    <!-- Upload Customers Modal -->
-    <div v-if="showUploadModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);">
-      <div style="background:white;border-radius:1rem;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);width:100%;max-width:900px;margin:1rem;max-height:90vh;display:flex;flex-direction:column;">
-        <!-- Header -->
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:1.5rem;border-bottom:1px solid #e5e7eb;">
-          <div>
-            <h2 style="font-size:1.5rem;font-weight:700;color:#1f2937;margin:0;">Upload Customers</h2>
-            <p style="font-size:0.875rem;color:#6b7280;margin:0.25rem 0 0 0;">Upload an Excel file to insert customer records into the database</p>
-          </div>
-          <button @click="closeUploadModal" style="color:#9ca3af;background:none;border:none;cursor:pointer;padding:0.25rem;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#9ca3af'">
-            <svg style="width:1.5rem;height:1.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Body -->
-        <div style="padding:1.5rem;overflow-y:auto;flex:1;">
-          <!-- Drop Zone -->
-          <div v-if="!uploadPreviewData.length" style="border:2px dashed #d1d5db;border-radius:0.75rem;padding:3rem;text-align:center;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#6366f1'" onmouseout="this.style.borderColor='#d1d5db'">
-            <svg style="width:4rem;height:4rem;color:#d1d5db;margin:0 auto 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            <label style="cursor:pointer;">
-              <span style="display:inline-block;padding:0.75rem 1.5rem;background:linear-gradient(to right,#4f46e5,#7c3aed);color:white;border-radius:0.75rem;font-weight:500;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);transition:box-shadow 0.2s;">
-                Choose Excel File
-              </span>
-              <input type="file" accept=".xlsx,.xls" @change="handleUploadFileSelect" style="display:none;" />
-            </label>
-            <p style="color:#9ca3af;font-size:0.875rem;margin-top:0.75rem;">Supports .xlsx and .xls files</p>
-          </div>
-
-          <!-- Preview Table -->
-          <div v-if="uploadPreviewData.length">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-              <div style="display:flex;align-items:center;gap:0.75rem;">
-                <span style="padding:0.25rem 0.75rem;background:#e0e7ff;color:#4338ca;border-radius:9999px;font-size:0.875rem;font-weight:500;">
-                  {{ uploadPreviewData.length }} rows
-                </span>
-                <span style="font-size:0.875rem;color:#6b7280;">{{ uploadFileName }}</span>
-              </div>
-              <button @click="clearUploadPreview" style="font-size:0.875rem;color:#ef4444;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:0.25rem;" onmouseover="this.style.color='#b91c1c'" onmouseout="this.style.color='#ef4444'">
-                <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Clear
-              </button>
-            </div>
-            <div style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:0.75rem;">
-              <table style="min-width:100%;border-collapse:collapse;font-size:0.8rem;">
-                <thead style="background:#f9fafb;">
-                  <tr>
-                    <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;">#</th>
-                    <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;">NOCS_NAME</th>
-                    <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;">CUSTOMER_NUM</th>
-                    <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;">CUSTOMER_NAME</th>
-                    <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;">FATHER_NAME</th>
-                    <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;">ADDRESS</th>
-                    <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;">MOBILE_NO</th>
-                    <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;">METER_NO</th>
-                    <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;">PHASE</th>
-                    <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;">TARIFF</th>
-                    <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;">CONN_DATE</th>
-                    <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;">FEEDER_NO</th>
-                    <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;">FEEDER_NAME</th>
-                    <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;">SANCTION_LOAD</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(row, idx) in uploadPreviewData" :key="idx" style="border-top:1px solid #f3f4f6;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
-                    <td style="padding:0.5rem 0.75rem;color:#9ca3af;">{{ idx + 1 }}</td>
-                    <td style="padding:0.5rem 0.75rem;">{{ row.NOCS_NAME }}</td>
-                    <td style="padding:0.5rem 0.75rem;font-weight:600;color:#4f46e5;font-family:monospace;">{{ row.CUSTOMER_NUM }}</td>
-                    <td style="padding:0.5rem 0.75rem;">{{ row.CUSTOMER_NAME }}</td>
-                    <td style="padding:0.5rem 0.75rem;">{{ row.FATHER_NAME }}</td>
-                    <td style="padding:0.5rem 0.75rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" :title="row.ADDRESS">{{ row.ADDRESS }}</td>
-                    <td style="padding:0.5rem 0.75rem;">{{ row.MOBILE_NO }}</td>
-                    <td style="padding:0.5rem 0.75rem;">{{ row.METER_NO }}</td>
-                    <td style="padding:0.5rem 0.75rem;">{{ row.PHASE }}</td>
-                    <td style="padding:0.5rem 0.75rem;">{{ row.TARIFF }}</td>
-                    <td style="padding:0.5rem 0.75rem;">{{ row.CONN_DATE }}</td>
-                    <td style="padding:0.5rem 0.75rem;">{{ row.FEEDER_NO }}</td>
-                    <td style="padding:0.5rem 0.75rem;">{{ row.FEEDER_NAME }}</td>
-                    <td style="padding:0.5rem 0.75rem;">{{ row.SANCTION_LOAD }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Result Banner -->
-          <div v-if="uploadResult" style="margin-top:1rem;padding:1rem;border-radius:0.75rem;" :style="uploadResult.success ? 'background:#f0fdf4;border:1px solid #bbf7d0;' : 'background:#fef2f2;border:1px solid #fecaca;'">
-            <p style="font-weight:600;margin:0;" :style="uploadResult.success ? 'color:#15803d;' : 'color:#dc2626;'">
-              {{ uploadResult.success ? 'Upload Complete' : 'Upload Failed' }}
-            </p>
-            <p style="font-size:0.875rem;margin:0.25rem 0 0 0;" :style="uploadResult.success ? 'color:#16a34a;' : 'color:#ef4444;'">
-              {{ uploadResult.message }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Footer -->
-        <div style="padding:1.5rem;border-top:1px solid #e5e7eb;">
-          <div style="display:flex;align-items:center;justify-content:flex-end;gap:0.75rem;">
-            <button @click="closeUploadModal" :disabled="uploading" class="btn btn-outline">Cancel</button>
-            <button @click="confirmUpload" :disabled="!uploadPreviewData.length || uploading" class="btn btn-primary" style="background:linear-gradient(to right,#4f46e5,#7c3aed);border:none;">
-              <svg v-if="uploading" style="width:1rem;height:1rem;animation:spin 1s linear infinite;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" stroke-width="2" stroke-dasharray="31.4" stroke-dashoffset="10" />
-              </svg>
-              {{ uploading ? 'Uploading...' : 'Confirm Upload' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -430,15 +325,8 @@ interface BillStatusSummary {
 const customers = ref<Customer[]>([]);
 const customerNumSearch = ref('');
 const meterNoSearch = ref('');
+const file = ref<File | null>(null);
 const hasSearched = ref(false);
-
-// Upload modal state
-const showUploadModal = ref(false);
-const uploadPreviewData = ref<any[]>([]);
-const uploadFileName = ref('');
-const uploading = ref(false);
-const uploadResult = ref<{ success: boolean; message: string } | null>(null);
-const selectedFile = ref<File | null>(null);
 const billStatusSummary = ref<BillStatusSummary>({
   billStart: 0,
   billStop: 0,
@@ -454,61 +342,33 @@ onMounted(() => {
   // Initial search when component mounts
 });
 
-const handleUploadFileSelect = (event: Event) => {
+const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement;
-  if (!target.files?.length) return;
-  const file = target.files[0];
-  selectedFile.value = file;
-  uploadFileName.value = file.name;
-  uploadResult.value = null;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = new Uint8Array(e.target?.result as ArrayBuffer);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData: any[] = XLSX.utils.sheet_to_json(firstSheet, { raw: false, dateNF: 'dd-mmm-yyyy' });
-      uploadPreviewData.value = jsonData;
-    } catch (err) {
-      console.error('Error parsing Excel file:', err);
-      alert('Failed to parse the Excel file. Please check the file format.');
-    }
-  };
-  reader.readAsArrayBuffer(file);
-  target.value = '';
+  if (target.files) {
+    file.value = target.files[0];
+  }
 };
 
-const clearUploadPreview = () => {
-  uploadPreviewData.value = [];
-  uploadFileName.value = '';
-  uploadResult.value = null;
-  selectedFile.value = null;
-};
-
-const closeUploadModal = () => {
-  showUploadModal.value = false;
-  clearUploadPreview();
-};
-
-const confirmUpload = async () => {
-  if (!selectedFile.value) return;
-  uploading.value = true;
-  uploadResult.value = null;
+const uploadFile = async () => {
+  if (!file.value) {
+    alert('Please select a file to upload.');
+    return;
+  }
 
   const formData = new FormData();
-  formData.append('file', selectedFile.value);
+  formData.append('file', file.value);
 
   try {
     await apiClient.post('/customers/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
     });
-    uploadResult.value = { success: true, message: `${uploadPreviewData.value.length} records uploaded successfully.` };
-  } catch (error: any) {
+    alert('Customers uploaded successfully!');
+    search(); // Refresh the list
+  } catch (error) {
     console.error('Error uploading customers:', error);
-    uploadResult.value = { success: false, message: error.response?.data || error.message || 'Upload failed.' };
-  } finally {
-    uploading.value = false;
+    alert('Error uploading customers.');
   }
 };
 
@@ -743,6 +603,39 @@ const exportToExcel = () => {
   flex-wrap: wrap;
 }
 
+.file-upload-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-upload-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.file-upload-label:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.file-upload-label svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
 
 /* Search Section */
 .search-section {
@@ -1126,11 +1019,6 @@ const exportToExcel = () => {
 .page-item.disabled .page-link {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 /* Responsive Design */
