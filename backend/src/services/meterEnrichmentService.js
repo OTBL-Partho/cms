@@ -1,5 +1,14 @@
 const { Customer, LastBillDate } = require('../models');
 
+const toLocalDateStr = (date) => {
+  const d = new Date(date);
+  if (!d || isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
 const determineHesByMeterPrefix = (meterNumber = '') => {
   const value = String(meterNumber || '');
   if (value.startsWith('90') || value.startsWith('91')) return 'L+G';
@@ -35,10 +44,10 @@ const buildRemarksFromDates = (lastBillDate, replaceDate, installDate) => {
   if (lastBillDate) {
     if (lastBillDate > replaceDate) return 'Error: Last Bill Date is after Replace Date';
     if (lastBillDate.getTime() === replaceDate.getTime()) return 'Immediate replacement needed';
-    return `Reads needed from ${lastBillDate.toISOString().split('T')[0]} to ${replaceDate.toISOString().split('T')[0]}`;
+    return `Reads needed from ${toLocalDateStr(lastBillDate)} to ${toLocalDateStr(replaceDate)}`;
   }
   if (installDate instanceof Date && !Number.isNaN(installDate.getTime())) {
-    return `Reads needed from ${installDate.toISOString().split('T')[0]} to ${replaceDate.toISOString().split('T')[0]}`;
+    return `Reads needed from ${toLocalDateStr(installDate)} to ${toLocalDateStr(replaceDate)}`;
   }
   return 'Reads needed from Install Date to Replace Date';
 };
@@ -82,13 +91,13 @@ const enrichAndValidateRow = async (row) => {
     'Old Meter Number': oldMeterNumber || '',
     'New Meter Number': newMeterNumber || '',
     'Replace Date': replaceDateStr || '',
-    installDate: customer?.CONN_DATE ? new Date(customer.CONN_DATE).toISOString().split('T')[0] : '',
+    installDate: customer?.CONN_DATE ? toLocalDateStr(new Date(customer.CONN_DATE)) : '',
     nocs: customer?.NOCS_NAME || '',
     tariff: customer?.TARIFF || '',
     sanctionLoad: customer?.SANCTION_LOAD || '',
     phase,
     address: customer?.ADDRESS || '',
-    lastBillDate: lastBillDate ? lastBillDate.toISOString().split('T')[0] : 'N/A',
+    lastBillDate: lastBillDate ? toLocalDateStr(lastBillDate) : 'N/A',
     hes,
     model,
     manufacturer,
