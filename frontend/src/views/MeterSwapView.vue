@@ -59,6 +59,10 @@
         <!-- Clear -->
         <button @click="clearFilters" class="px-4 py-2 border border-gray-300 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors">Clear</button>
         <div class="flex-1"></div>
+        <!-- Mark All In Process -->
+        <button @click="handleMarkAllInProcess" :disabled="markingInProcess" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-xl text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50">
+          {{ markingInProcess ? 'Processing...' : 'Mark All In Process' }}
+        </button>
         <!-- Refresh -->
         <button @click="refresh" :disabled="loading" class="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50">
           <svg class="w-4 h-4" :class="{ 'animate-spin': loading }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -155,13 +159,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { getCMOMeterSwaps, getCMOMeterSwapStats, updateCMOMeterSwapStatus, autoResolveCMOMeterSwaps } from '../api';
+import { getCMOMeterSwaps, getCMOMeterSwapStats, updateCMOMeterSwapStatus, autoResolveCMOMeterSwaps, markAllCMOMeterSwapsInProcess } from '../api';
 
 const swaps = ref<any[]>([]);
 const stats = ref<{ open: number; inProcess: number; resolved: number; total: number } | null>(null);
 const pagination = ref<{ page: number; limit: number; total: number; totalPages: number } | null>(null);
 const loading = ref(false);
 const updatingId = ref<number | null>(null);
+const markingInProcess = ref(false);
 
 const filters = ref({ search: '', status: '', page: 1, limit: 20 });
 
@@ -198,6 +203,18 @@ const autoResolve = async () => {
   try {
     await autoResolveCMOMeterSwaps();
   } catch {}
+};
+
+const handleMarkAllInProcess = async () => {
+  markingInProcess.value = true;
+  try {
+    await markAllCMOMeterSwapsInProcess();
+    refresh();
+  } catch (e: any) {
+    alert(e.response?.data?.message || 'Failed to mark all as In Process');
+  } finally {
+    markingInProcess.value = false;
+  }
 };
 
 const refresh = () => { autoResolve().then(() => { fetchSwaps(); fetchStats(); }); };

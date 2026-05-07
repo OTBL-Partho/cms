@@ -123,6 +123,51 @@ exports.autoResolve = async (req, res) => {
   }
 };
 
+exports.markAllInProcess = async (req, res) => {
+  try {
+    const token = await getCmoApiToken();
+    const authHeader = { Authorization: `Bearer ${token}` };
+
+    // Fetch all Open swaps (paginate through all pages)
+    let page = 1;
+    const limit = 500;
+    let allSwaps = [];
+    while (true) {
+      const response = await axios.get(`${CMO_API_URL}/meter-swap/list`, {
+        headers: authHeader,
+        params: { status: 'Open', page, limit },
+        timeout: 30000
+      });
+      const data = response.data?.data || [];
+      allSwaps = allSwaps.concat(data);
+      const pagination = response.data?.pagination;
+      if (!pagination || page >= pagination.totalPages) break;
+      page++;
+    }
+
+    if (allSwaps.length === 0) {
+      return res.json({ success: true, marked: 0 });
+    }
+
+    let marked = 0;
+    for (const swap of allSwaps) {
+      try {
+        await axios.patch(`${CMO_API_URL}/meter-swap/${swap.Id}/status`, { status: 'InProcess' }, {
+          headers: authHeader,
+          timeout: 15000
+        });
+        marked++;
+      } catch {
+        // skip failed, continue others
+      }
+    }
+
+    return res.json({ success: true, marked, total: allSwaps.length });
+  } catch (error) {
+    return handleCmoError(res, error, 'Failed to mark all swaps as InProcess');
+  }
+};
+
 exports.updateStatus = async (req, res) => {
   try {
     const token = await getCmoApiToken();

@@ -9,6 +9,7 @@ router.use(hasRole('Super Admin', 'Admin', 'Manager'));
 router.get('/', ctrl.getList);
 router.get('/stats', ctrl.getStats);
 router.post('/auto-resolve', ctrl.autoResolve);
+router.post('/mark-all-inprocess', ctrl.markAllInProcess);
 router.patch('/:id/status', ctrl.updateStatus);
 
 module.exports = router;
