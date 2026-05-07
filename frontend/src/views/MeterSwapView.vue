@@ -60,7 +60,7 @@
         <button @click="clearFilters" class="px-4 py-2 border border-gray-300 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors">Clear</button>
         <div class="flex-1"></div>
         <!-- Refresh -->
-        <button @click="refresh" :disabled="loading" class="px-4 py-2 border border-gray-300 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors flex items-center gap-2 disabled:opacity-50">
+        <button @click="refresh" :disabled="loading" class="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50">
           <svg class="w-4 h-4" :class="{ 'animate-spin': loading }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           Refresh
         </button>
@@ -155,7 +155,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { getCMOMeterSwaps, getCMOMeterSwapStats, updateCMOMeterSwapStatus } from '../api';
+import { getCMOMeterSwaps, getCMOMeterSwapStats, updateCMOMeterSwapStatus, autoResolveCMOMeterSwaps } from '../api';
 
 const swaps = ref<any[]>([]);
 const stats = ref<{ open: number; inProcess: number; resolved: number; total: number } | null>(null);
@@ -194,7 +194,13 @@ const fetchStats = async () => {
   } catch {}
 };
 
-const refresh = () => { fetchSwaps(); fetchStats(); };
+const autoResolve = async () => {
+  try {
+    await autoResolveCMOMeterSwaps();
+  } catch {}
+};
+
+const refresh = () => { autoResolve().then(() => { fetchSwaps(); fetchStats(); }); };
 const clearFilters = () => { filters.value = { search: '', status: '', page: 1, limit: 20 }; fetchSwaps(); };
 const goToPage = (p: number) => { if (!pagination.value) return; filters.value.page = p; fetchSwaps(); };
 
@@ -217,5 +223,5 @@ const statusClass = (status: string) => {
   return 'bg-gray-100 text-gray-600';
 };
 
-onMounted(() => { fetchSwaps(); fetchStats(); });
+onMounted(() => { autoResolve().then(() => { fetchSwaps(); fetchStats(); }); });
 </script>

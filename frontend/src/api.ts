@@ -301,3 +301,7 @@ export const getCMOMeterSwapStats = () => {
 export const updateCMOMeterSwapStatus = (id: number, status: string) => {
   return apiClient.patch(`/cmo-meter-swap/${id}/status`, { status });
 };
+
+export const autoResolveCMOMeterSwaps = () => {
+  return apiClient.post('/cmo-meter-swap/auto-resolve');
+};
