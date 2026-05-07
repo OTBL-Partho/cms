@@ -20,14 +20,15 @@ const uploadCustomers = async (req, res) => {
       return isNaN(d.getTime()) ? null : d;
     };
 
+    // --- Step 1: validate rows and map fields ---
     const errors = [];
-    const validData = [];
+    const mapped = [];
     for (const customer of customers) {
       if (!customer.CUSTOMER_NUM) {
         errors.push('Row skipped: missing CUSTOMER_NUM');
         continue;
       }
-      validData.push({
+      mapped.push({
         NOCS_NAME: customer.NOCS_NAME,
         CUSTOMER_NUM: String(customer.CUSTOMER_NUM).trim(),
         CUSTOMER_NAME: customer.CUSTOMER_NAME,
@@ -44,8 +45,26 @@ const uploadCustomers = async (req, res) => {
       });
     }
 
-    // Process in chunks of 500 to avoid SQLite variable limit (~999)
-    // and keep memory usage flat for 300k+ row files
+    // --- Step 2: deduplicate within the file itself ---
+    // If the same CUSTOMER_NUM appears more than once in the Excel, SQLite's
+    // INSERT OR IGNORE would silently drop the second occurrence but our counter
+    // would still count it — causing the DB total to be lower than the file total.
+    const seenInFile = new Set();
+    const validData = [];
+    let intraFileDupes = 0;
+    for (const row of mapped) {
+      if (seenInFile.has(row.CUSTOMER_NUM)) {
+        intraFileDupes++;
+      } else {
+        seenInFile.add(row.CUSTOMER_NUM);
+        validData.push(row);
+      }
+    }
+    if (intraFileDupes > 0) {
+      errors.push(`${intraFileDupes} duplicate CUSTOMER_NUM(s) found within the file — only first occurrence kept`);
+    }
+
+    // --- Step 3: chunked insert (500 rows/chunk to stay inside SQLite variable limit) ---
     const CHUNK_SIZE = 500;
     let totalInserted = 0;
     let totalSkipped = 0;
@@ -72,7 +91,8 @@ const uploadCustomers = async (req, res) => {
     res.status(200).json({
       success: true,
       inserted: totalInserted,
-      skipped: totalSkipped,
+      skipped: totalSkipped,           // already existed in DB
+      intraFileDupes,                  // duplicates removed from the file itself
       errors,
       total: customers.length,
     });
