@@ -283,20 +283,17 @@
             </svg>
             {{ exporting ? 'Exporting...' : 'Export Excel' }}
           </button>
+          <button
+            @click="refresh"
+            :disabled="loading"
+            class="px-4 py-2.5 border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium text-gray-700 flex items-center gap-2 disabled:opacity-50"
+          >
+            <svg class="w-4 h-4" :class="{ 'animate-spin': loading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
         </div>
-      </div>
-      <!-- Second row: Refresh right-aligned -->
-      <div class="flex justify-end">
-        <button
-          @click="refresh"
-          :disabled="loading"
-          class="px-4 py-2.5 border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium text-gray-700 flex items-center gap-2 disabled:opacity-50"
-        >
-          <svg class="w-4 h-4" :class="{ 'animate-spin': loading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh
-        </button>
       </div>
     </div>
 
@@ -817,16 +814,17 @@ const exportToExcel = async () => {
     if (rawData.length > 0) console.log('[CMO Export] First record keys:', Object.keys(rawData[0]), rawData[0]);
 
     const allRecords = rawData.map((row: any) => ({
-      'Customer No.': row.OldConsumerId || '',
-      'New Meter No.': row.NewMeterNoOCR || '',
+      'ID': row.OldConsumerId || '',
       'NAME': row.CustomerName || '',
       'ADDRESS': row.CustomerAddress || '',
-      'MOBILE': row.ChangedMobile || row.SecondaryMobile || row.CustomerMobile || '',
+      'MOBILE': row.CustomerMobile || '',
+      'CHANGED MOBILE': row.ChangedMobile || '',
+      'SECONDARY MOBILE': row.SecondaryMobile || '',
       'NOCS': row.CustomerNOCS || '',
       'Install Dt': row.InstallDate || '',
+      'New Meter No.': row.NewMeterNoOCR || '',
       'Latitude': row.Latitude || '',
       'Longitude': row.Longitude || '',
-      'MDM Entry': row.IsMDMEntry ? 'Yes' : 'No'
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(allRecords);
