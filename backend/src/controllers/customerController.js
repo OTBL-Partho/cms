@@ -20,48 +20,65 @@ const uploadCustomers = async (req, res) => {
       return isNaN(d.getTime()) ? null : d;
     };
 
-    const customerData = customers.map(customer => ({
-      NOCS_NAME: customer.NOCS_NAME,
-      CUSTOMER_NUM: customer.CUSTOMER_NUM,
-      CUSTOMER_NAME: customer.CUSTOMER_NAME,
-      FATHER_NAME: customer.FATHER_NAME,
-      ADDRESS: customer.ADDRESS,
-      MOBILE_NO: customer.MOBILE_NO,
-      SANCTION_LOAD: customer.SANCTION_LOAD,
-      METER_NO: customer.METER_NO,
-      PHASE: customer.PHASE,
-      TARIFF: customer.TARIFF,
-      CONN_DATE: parseDate(customer.CONN_DATE),
-      FEEDER_NO: customer.FEEDER_NO,
-      FEEDER_NAME: customer.FEEDER_NAME,
-    }));
-
-    const incomingNums = customerData.map(c => c.CUSTOMER_NUM).filter(Boolean);
-    const existing = await Customer.findAll({
-      attributes: ['CUSTOMER_NUM'],
-      where: { CUSTOMER_NUM: incomingNums },
-    });
-    const existingSet = new Set(existing.map(c => c.CUSTOMER_NUM));
-
     const errors = [];
     const validData = [];
-    for (const row of customerData) {
-      if (!row.CUSTOMER_NUM) {
-        errors.push(`Row skipped: missing CUSTOMER_NUM`);
+    for (const customer of customers) {
+      if (!customer.CUSTOMER_NUM) {
+        errors.push('Row skipped: missing CUSTOMER_NUM');
         continue;
       }
-      validData.push(row);
+      validData.push({
+        NOCS_NAME: customer.NOCS_NAME,
+        CUSTOMER_NUM: String(customer.CUSTOMER_NUM).trim(),
+        CUSTOMER_NAME: customer.CUSTOMER_NAME,
+        FATHER_NAME: customer.FATHER_NAME,
+        ADDRESS: customer.ADDRESS,
+        MOBILE_NO: customer.MOBILE_NO,
+        SANCTION_LOAD: customer.SANCTION_LOAD,
+        METER_NO: customer.METER_NO,
+        PHASE: customer.PHASE,
+        TARIFF: customer.TARIFF,
+        CONN_DATE: parseDate(customer.CONN_DATE),
+        FEEDER_NO: customer.FEEDER_NO,
+        FEEDER_NAME: customer.FEEDER_NAME,
+      });
     }
 
-    const newData = validData.filter(c => !existingSet.has(c.CUSTOMER_NUM));
-    const skipped = validData.filter(c => existingSet.has(c.CUSTOMER_NUM)).length;
+    // Process in chunks of 500 to avoid SQLite variable limit (~999)
+    // and keep memory usage flat for 300k+ row files
+    const CHUNK_SIZE = 500;
+    let totalInserted = 0;
+    let totalSkipped = 0;
 
-    await Customer.bulkCreate(newData, { ignoreDuplicates: true });
+    for (let i = 0; i < validData.length; i += CHUNK_SIZE) {
+      const chunk = validData.slice(i, i + CHUNK_SIZE);
+      const chunkNums = chunk.map(c => c.CUSTOMER_NUM);
 
-    res.status(200).json({ inserted: newData.length, skipped, errors, total: customers.length });
+      const existing = await Customer.findAll({
+        attributes: ['CUSTOMER_NUM'],
+        where: { CUSTOMER_NUM: chunkNums },
+      });
+      const existingSet = new Set(existing.map(c => c.CUSTOMER_NUM));
+
+      const newRows = chunk.filter(c => !existingSet.has(c.CUSTOMER_NUM));
+      totalSkipped += chunk.length - newRows.length;
+
+      if (newRows.length > 0) {
+        await Customer.bulkCreate(newRows, { ignoreDuplicates: true });
+        totalInserted += newRows.length;
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      inserted: totalInserted,
+      skipped: totalSkipped,
+      errors,
+      total: customers.length,
+    });
   } catch (error) {
     console.error('Error uploading customer data:', error);
-    res.status(500).send('An error occurred while uploading customer data.');
+    res.status(500).json({ success: false, message: 'An error occurred while uploading customer data.' });
   }
 };
 
