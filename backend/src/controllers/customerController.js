@@ -14,6 +14,12 @@ const uploadCustomers = async (req, res) => {
     const worksheet = workbook.Sheets[sheetName];
     const customers = xlsx.utils.sheet_to_json(worksheet, { raw: false, dateNF: 'dd-mmm-yyyy' });
 
+    const parseDate = (val) => {
+      if (!val) return null;
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
     const customerData = customers.map(customer => ({
       NOCS_NAME: customer.NOCS_NAME,
       CUSTOMER_NUM: customer.CUSTOMER_NUM,
@@ -25,7 +31,7 @@ const uploadCustomers = async (req, res) => {
       METER_NO: customer.METER_NO,
       PHASE: customer.PHASE,
       TARIFF: customer.TARIFF,
-      CONN_DATE: new Date(customer.CONN_DATE),
+      CONN_DATE: parseDate(customer.CONN_DATE),
       FEEDER_NO: customer.FEEDER_NO,
       FEEDER_NAME: customer.FEEDER_NAME,
     }));
