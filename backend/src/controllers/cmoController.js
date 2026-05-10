@@ -264,6 +264,65 @@ exports.uploadCustomerInfo = async (req, res) => {
 };
 
 /**
+ * GET /api/cmo/multi-search?ids=id1,id2,...
+ * Fan-out: one CMO API call per ID (parallel), aggregate unique results by Id.
+ */
+exports.multiSearchCMO = async (req, res) => {
+  try {
+    const token = await getCmoApiToken();
+    const { ids } = req.query;
+
+    if (!ids) {
+      return res.status(400).json({ success: false, message: 'ids query param required' });
+    }
+
+    const idList = [...new Set(
+      ids.split(',').map(s => s.trim()).filter(Boolean)
+    )];
+
+    if (idList.length === 0) {
+      return res.json({ success: true, data: [], total: 0 });
+    }
+
+    // Fan-out parallel requests — one per ID
+    const results = await Promise.allSettled(
+      idList.map(id =>
+        axios.get(`${CMO_API_URL}/cmo/cms-list`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { search: id, limit: 500 },
+          timeout: 30000
+        })
+      )
+    );
+
+    // Aggregate, deduplicate by record Id
+    const seen = new Set();
+    const combined = [];
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        const rows = result.value.data?.data || [];
+        for (const row of rows) {
+          if (!seen.has(row.Id)) {
+            seen.add(row.Id);
+            combined.push(row);
+          }
+        }
+      }
+    }
+
+    return res.json({ success: true, data: combined, total: combined.length });
+  } catch (error) {
+    console.error('CMO multi-search error:', error.response?.data || error.message);
+    if (error.response?.status === 401) {
+      clearCmoToken();
+    }
+    const statusCode = error.response?.status || 500;
+    const message = error.response?.data?.message || error.message || 'Failed to multi-search CMO data';
+    return res.status(statusCode).json({ success: false, message });
+  }
+};
+
+/**
  * GET /api/cmo/filter-options — Proxy to CMO API GET /api/cmo/filter-options
  * Returns distinct NOCS, CPC_CPR values for dropdown filters
  */

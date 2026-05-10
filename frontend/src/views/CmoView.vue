@@ -123,7 +123,7 @@
               v-model="filters.search"
               @input="debouncedFetch"
               type="text"
-              placeholder="Search by name, mobile, consumer ID, meter ID..."
+              placeholder="Search by name, consumer ID, meter ID… or paste multiple IDs comma-separated"
               class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             />
           </div>
@@ -616,7 +616,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { getCMOs, getCMOStatistics, checkMDMEntry, getCMOExportData, getCMOFilterOptions, uploadCustomerInfo } from '../api';
+import { getCMOs, getCMOMultiSearch, getCMOStatistics, checkMDMEntry, getCMOExportData, getCMOFilterOptions, uploadCustomerInfo } from '../api';
 import * as XLSX from 'xlsx';
 import { useAuthStore } from '../stores/auth';
 
@@ -733,23 +733,32 @@ const fetchCMOs = async () => {
   loading.value = true;
   error.value = '';
   try {
-    const params: Record<string, any> = {
-      page: filters.value.page,
-      limit: filters.value.limit,
-      sortBy: filters.value.sortBy,
-      sortOrder: 'DESC'
-    };
-    if (filters.value.search) params.search = filters.value.search;
-    if (filters.value.status !== '') params.isApproved = filters.value.status;
-    if (filters.value.nocs) params.nocs = filters.value.nocs;
-    if (filters.value.dateFrom) params.dateFrom = filters.value.dateFrom;
-    if (filters.value.dateTo) params.dateTo = filters.value.dateTo;
-    if (filters.value.isMDMEntry !== '') params.isMDMEntry = filters.value.isMDMEntry;
-    if (filters.value.cpcCpr !== '') params.cpcCpr = filters.value.cpcCpr;
+    const searchVal = filters.value.search.trim();
+    const isMultiSearch = searchVal.includes(',');
 
-    const response = await getCMOs(params);
-    cmos.value = response.data.data || [];
-    pagination.value = response.data.pagination || null;
+    if (isMultiSearch) {
+      const response = await getCMOMultiSearch(searchVal);
+      cmos.value = response.data.data || [];
+      pagination.value = null;
+    } else {
+      const params: Record<string, any> = {
+        page: filters.value.page,
+        limit: filters.value.limit,
+        sortBy: filters.value.sortBy,
+        sortOrder: 'DESC'
+      };
+      if (searchVal) params.search = searchVal;
+      if (filters.value.status !== '') params.isApproved = filters.value.status;
+      if (filters.value.nocs) params.nocs = filters.value.nocs;
+      if (filters.value.dateFrom) params.dateFrom = filters.value.dateFrom;
+      if (filters.value.dateTo) params.dateTo = filters.value.dateTo;
+      if (filters.value.isMDMEntry !== '') params.isMDMEntry = filters.value.isMDMEntry;
+      if (filters.value.cpcCpr !== '') params.cpcCpr = filters.value.cpcCpr;
+
+      const response = await getCMOs(params);
+      cmos.value = response.data.data || [];
+      pagination.value = response.data.pagination || null;
+    }
   } catch (err: any) {
     error.value = err.response?.data?.message || err.message || 'Failed to fetch CMO data';
     cmos.value = [];
@@ -796,43 +805,51 @@ const refresh = () => {
   fetchStatistics();
 };
 
+const toExcelRows = (rawData: any[]) => rawData.map((row: any) => ({
+  'ID': row.OldConsumerId || '',
+  'NAME': row.CustomerName || '',
+  'ADDRESS': row.CustomerAddress || '',
+  'MOBILE': row.CustomerMobile || '',
+  'CHANGED MOBILE': row.ChangedMobile || '',
+  'SECONDARY MOBILE': row.SecondaryMobile || '',
+  'NOCS': row.CustomerNOCS || '',
+  'Install Dt': row.InstallDate || '',
+  'New Meter No.': row.NewMeterNoOCR || '',
+  'Latitude': row.Latitude || '',
+  'Longitude': row.Longitude || '',
+  'MDM Entry': row.IsMDMEntry === 1 || row.IsMDMEntry === true ? 'Yes' : 'No',
+}));
+
+const writeExcel = (rows: any[]) => {
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'CMO Records');
+  const nocsSuffix = filters.value.nocs ? `_${filters.value.nocs}` : '';
+  XLSX.writeFile(workbook, `cmo_records_${new Date().toISOString().slice(0, 10)}${nocsSuffix}.xlsx`);
+};
+
 const exportToExcel = async () => {
   exporting.value = true;
   try {
-    const exportParams: Record<string, any> = {};
-    if (filters.value.search) exportParams.search = filters.value.search;
-    if (filters.value.status !== '') exportParams.isApproved = filters.value.status;
-    if (filters.value.nocs) exportParams.nocs = filters.value.nocs;
-    if (filters.value.dateFrom) exportParams.dateFrom = filters.value.dateFrom;
-    if (filters.value.dateTo) exportParams.dateTo = filters.value.dateTo;
-    if (filters.value.isMDMEntry !== '') exportParams.isMDMEntry = filters.value.isMDMEntry;
-    if (filters.value.cpcCpr !== '') exportParams.cpcCpr = filters.value.cpcCpr;
+    const searchVal = filters.value.search.trim();
+    const isMultiSearch = searchVal.includes(',');
 
-    const response = await getCMOExportData(exportParams);
+    if (isMultiSearch) {
+      writeExcel(toExcelRows(cmos.value));
+    } else {
+      const exportParams: Record<string, any> = {};
+      if (searchVal) exportParams.search = searchVal;
+      if (filters.value.status !== '') exportParams.isApproved = filters.value.status;
+      if (filters.value.nocs) exportParams.nocs = filters.value.nocs;
+      if (filters.value.dateFrom) exportParams.dateFrom = filters.value.dateFrom;
+      if (filters.value.dateTo) exportParams.dateTo = filters.value.dateTo;
+      if (filters.value.isMDMEntry !== '') exportParams.isMDMEntry = filters.value.isMDMEntry;
+      if (filters.value.cpcCpr !== '') exportParams.cpcCpr = filters.value.cpcCpr;
 
-    const rawData = response.data.data || [];
-    if (rawData.length > 0) console.log('[CMO Export] First record keys:', Object.keys(rawData[0]), rawData[0]);
-
-    const allRecords = rawData.map((row: any) => ({
-      'ID': row.OldConsumerId || '',
-      'NAME': row.CustomerName || '',
-      'ADDRESS': row.CustomerAddress || '',
-      'MOBILE': row.CustomerMobile || '',
-      'CHANGED MOBILE': row.ChangedMobile || '',
-      'SECONDARY MOBILE': row.SecondaryMobile || '',
-      'NOCS': row.CustomerNOCS || '',
-      'Install Dt': row.InstallDate || '',
-      'New Meter No.': row.NewMeterNoOCR || '',
-      'Latitude': row.Latitude || '',
-      'Longitude': row.Longitude || '',
-      'MDM Entry': row.IsMDMEntry === 1 || row.IsMDMEntry === true ? 'Yes' : 'No',
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(allRecords);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'CMO Records');
-    const nocsSuffix = filters.value.nocs ? `_${filters.value.nocs}` : '';
-    XLSX.writeFile(workbook, `cmo_records_${new Date().toISOString().slice(0, 10)}${nocsSuffix}.xlsx`);
+      const response = await getCMOExportData(exportParams);
+      const rawData = response.data.data || [];
+      writeExcel(toExcelRows(rawData));
+    }
   } catch (err) {
     console.error('Error exporting to Excel:', err);
   } finally {

@@ -235,6 +235,10 @@ export const getCMOFilterOptions = () => {
   return apiClient.get('/cmo/filter-options');
 };
 
+export const getCMOMultiSearch = (ids: string) => {
+  return apiClient.get('/cmo/multi-search', { params: { ids } });
+};
+
 export const getCMOStatistics = () => {
   return apiClient.get('/cmo/statistics');
 };
