@@ -36,18 +36,72 @@
             <p class="text-indigo-200 text-xs">Upload billing date data</p>
           </div>
         </div>
-        <div class="p-5">
-          <label class="flex flex-col items-center justify-center border-2 border-dashed border-indigo-200 rounded-xl p-6 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all mb-4">
+        <div class="p-5 flex flex-col gap-3">
+          <!-- Drop zone (no file selected) -->
+          <label v-if="!billFile" class="flex flex-col items-center justify-center border-2 border-dashed border-indigo-200 rounded-xl p-6 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all">
             <svg class="w-8 h-8 text-indigo-300 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
               <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
             <p class="text-sm text-gray-600 font-medium">Choose CSV file</p>
-            <p class="text-xs text-gray-400 mt-1">Drag & drop or click to browse</p>
+            <p class="text-xs text-gray-400 mt-1">Click to browse</p>
             <input type="file" class="hidden" @change="handleFileUpload" accept=".csv">
           </label>
-          <button @click="uploadFile" class="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:-translate-y-0.5 hover:shadow-lg transition-all">
-            Upload Last Bill Date
+
+          <!-- File selected card -->
+          <div v-if="billFile && !billResult" class="flex items-center gap-3 border border-indigo-200 rounded-xl px-4 py-3 bg-indigo-50/40">
+            <svg class="w-8 h-8 text-indigo-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-gray-800 truncate">{{ billFile.name }}</p>
+              <p class="text-xs text-gray-500">{{ formatBillFileSize(billFile.size) }} &nbsp;·&nbsp; Ready to upload</p>
+            </div>
+            <button @click="billFile = null; billResult = null" class="text-gray-400 hover:text-red-500 transition-colors p-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Result banner -->
+          <div v-if="billResult" class="rounded-xl overflow-hidden border" :class="billResult.success ? 'border-green-200' : 'border-red-200'">
+            <div class="px-4 py-3 flex items-center gap-2" :class="billResult.success ? 'bg-green-50' : 'bg-red-50'">
+              <svg class="w-4 h-4 flex-shrink-0" :class="billResult.success ? 'text-green-600' : 'text-red-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path v-if="billResult.success" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span class="text-sm font-semibold" :class="billResult.success ? 'text-green-700' : 'text-red-600'">
+                {{ billResult.success ? 'Upload Complete' : 'Upload Failed' }}
+              </span>
+            </div>
+            <div v-if="billResult.success" class="px-4 py-2 bg-white flex gap-4 text-xs border-t border-gray-100">
+              <span>Inserted: <strong class="text-green-700">{{ (billResult.inserted ?? 0).toLocaleString() }}</strong></span>
+              <span>Skipped: <strong class="text-yellow-700">{{ (billResult.skipped ?? 0).toLocaleString() }}</strong></span>
+            </div>
+            <div v-if="!billResult.success" class="px-4 py-2 bg-white text-xs text-red-500 border-t border-gray-100">{{ billResult.message }}</div>
+            <div class="px-4 py-2 bg-gray-50 border-t border-gray-100 flex justify-end">
+              <button @click="billFile = null; billResult = null" class="text-xs text-indigo-600 hover:underline">Upload another file</button>
+            </div>
+          </div>
+
+          <!-- Progress bar -->
+          <div v-if="billUploading" class="space-y-1">
+            <div class="flex justify-between text-xs text-indigo-600 font-medium">
+              <span>{{ billProgress < 100 ? 'Uploading file…' : 'Processing records…' }}</span>
+              <span>{{ billProgress }}%</span>
+            </div>
+            <div class="w-full bg-indigo-100 rounded-full h-2 overflow-hidden">
+              <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-300" :style="{ width: `${billProgress}%` }"></div>
+            </div>
+          </div>
+
+          <!-- Upload button -->
+          <button
+            v-if="!billResult"
+            @click="uploadFile"
+            :disabled="!billFile || billUploading"
+            class="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2">
+            <svg v-if="billUploading" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2.5" stroke-dasharray="31.4" stroke-dashoffset="10"/></svg>
+            {{ billUploading ? 'Uploading…' : 'Upload Last Bill Date' }}
           </button>
         </div>
       </div>
@@ -143,32 +197,48 @@ const file = ref<File | null>(null);
 const mdmFile = ref<File | null>(null);
 const billingFile = ref<File | null>(null);
 
+const billFile = ref<File | null>(null);
+const billUploading = ref(false);
+const billProgress = ref(0);
+const billResult = ref<{ success: boolean; inserted?: number; skipped?: number; message?: string } | null>(null);
+
+const formatBillFileSize = (bytes: number): string => {
+  if (!bytes) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
+};
+
 const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement;
-  if (target.files) {
-    file.value = target.files[0];
+  if (target.files?.length) {
+    billFile.value = target.files[0];
+    billResult.value = null;
+    target.value = '';
   }
 };
 
 const uploadFile = async () => {
-  if (!file.value) {
-    alert('Please select a file to upload.');
-    return;
-  }
-
+  if (!billFile.value) return;
+  billUploading.value = true;
+  billProgress.value = 0;
+  billResult.value = null;
   const formData = new FormData();
-  formData.append('file', file.value);
-
+  formData.append('file', billFile.value);
   try {
-    await apiClient.post('/last-bill-date/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+    const res = await apiClient.post('/last-bill-date/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (e) => {
+        if (e.total) billProgress.value = Math.round((e.loaded / e.total) * 100);
       }
     });
-    alert('Last bill date data uploaded successfully!');
-  } catch (error) {
-    console.error('Error uploading last bill date data:', error);
-    alert('Error uploading last bill date data.');
+    billProgress.value = 100;
+    billResult.value = { success: true, inserted: res.data.inserted, skipped: res.data.skipped };
+  } catch (error: any) {
+    billResult.value = { success: false, message: error.response?.data?.message || error.message || 'Upload failed.' };
+  } finally {
+    billUploading.value = false;
   }
 };
 
