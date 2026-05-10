@@ -825,6 +825,7 @@ const exportToExcel = async () => {
       'New Meter No.': row.NewMeterNoOCR || '',
       'Latitude': row.Latitude || '',
       'Longitude': row.Longitude || '',
+      'MDM Entry': row.IsMDMEntry === 1 || row.IsMDMEntry === true ? 'Yes' : 'No',
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(allRecords);
