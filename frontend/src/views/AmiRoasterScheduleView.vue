@@ -251,7 +251,7 @@
           </div>
           <div class="form-group">
             <label>Assignment</label>
-            <input type="text" v-model="editForm.assignment" class="modal-input" placeholder="e.g. 🔧 MAINTENANCE BATCH" />
+            <textarea v-model="editForm.assignment" class="modal-input modal-textarea" placeholder="e.g. 🔧 MAINTENANCE BATCH&#10;One task per line" rows="4"></textarea>
           </div>
         </div>
         <div class="modal-footer">
@@ -904,6 +904,8 @@ onMounted(async () => {
   background: rgba(234,88,12,0.1);
   color: #c2410c;
   border: 1px solid rgba(234,88,12,0.25);
+  white-space: pre-wrap;
+  line-height: 1.6;
 }
 .dark-mode .assignment-chip {
   background: rgba(251,146,60,0.12);
@@ -1072,6 +1074,13 @@ onMounted(async () => {
 .dark-mode .modal-input:focus {
   border-color: #c084fc;
   box-shadow: 0 0 0 3px rgba(192,132,252,0.15);
+}
+
+.modal-textarea {
+  height: auto;
+  padding: 0.65rem 0.9rem;
+  resize: vertical;
+  line-height: 1.5;
 }
 
 .modal-footer {
