@@ -313,3 +313,12 @@ export const autoResolveCMOMeterSwaps = () => {
 export const markAllCMOMeterSwapsInProcess = () => {
   return apiClient.post('/cmo-meter-swap/mark-all-inprocess');
 };
+
+// --- Roaster Schedule --- //
+export const getRoasterSchedule = () => {
+  return apiClient.get('/roaster');
+};
+
+export const saveRoasterSchedule = (entries: { date: string; day: string; name: string; email?: string; assignment?: string | null }[]) => {
+  return apiClient.post('/roaster', { entries });
+};

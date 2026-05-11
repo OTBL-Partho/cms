@@ -14,20 +14,37 @@
           <p class="title-sub">Real-time monitoring duty assignments and tracking</p>
         </div>
       </div>
-      <div class="header-stats">
-        <div class="stat-item">
-          <span class="stat-label">Total Entries</span>
-          <span class="stat-value">{{ roaster.length }}</span>
+      <div class="header-right">
+        <div class="header-stats">
+          <div class="stat-item">
+            <span class="stat-label">Total Entries</span>
+            <span class="stat-value">{{ roaster.length }}</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-label">Completed</span>
+            <span class="stat-value highlight">{{ completedCount }}</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-label">Remaining</span>
+            <span class="stat-value">{{ roaster.length - completedCount }}</span>
+          </div>
         </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <span class="stat-label">Completed</span>
-          <span class="stat-value highlight">{{ completedCount }}</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <span class="stat-label">Remaining</span>
-          <span class="stat-value">{{ roaster.length - completedCount }}</span>
+
+        <label class="btn-upload" :class="{ uploading: uploadParsing }" title="Upload new schedule (CSV or Excel)">
+          <svg v-if="!uploadParsing" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+          </svg>
+          <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin">
+            <circle cx="12" cy="12" r="10" stroke-dasharray="31.4" stroke-dashoffset="10" />
+          </svg>
+          {{ uploadParsing ? 'Parsing...' : 'Upload Schedule' }}
+          <input type="file" accept=".csv,.xlsx,.xls" @change="handleUpload" style="display:none" />
+        </label>
+
+        <div v-if="uploadMsg" class="upload-msg" :class="uploadMsg.type">
+          {{ uploadMsg.text }}
         </div>
       </div>
     </header>
@@ -75,8 +92,10 @@
           <thead>
             <tr>
               <th>Date Information</th>
-              <th>Assignment</th>
+              <th>Duty Member</th>
               <th>Status</th>
+              <th>Assignments</th>
+              <th v-if="canEdit"></th>
             </tr>
           </thead>
           <tbody>
@@ -114,10 +133,23 @@
                 <span v-else-if="isPast(item.date)" class="badge badge-past">Completed</span>
                 <span v-else class="badge badge-upcoming">Scheduled</span>
               </td>
+              <td class="td-assignment">
+                <span v-if="item.assignment || item.day === 'Sunday' || item.day === 'Wednesday'" class="assignment-chip">
+                  {{ item.assignment || '🔧 MAINTENANCE BATCH' }}
+                </span>
+                <span v-else class="assignment-empty">—</span>
+              </td>
+              <td v-if="canEdit" class="td-action">
+                <button class="btn-edit-row" @click="startEdit(item)" :title="isPast(item.date) ? 'Cannot edit completed entries' : 'Edit row'" :disabled="isPast(item.date)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </button>
+              </td>
             </tr>
 
             <tr v-if="filteredRoaster.length === 0">
-              <td colspan="3" class="empty-state">
+              <td :colspan="canEdit ? 5 : 4" class="empty-state">
                 <div class="empty-msg">
                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke-width="1.5">
                     <circle cx="12" cy="12" r="10" :stroke="isDark ? '#334155' : '#cbd5e1'" />
@@ -184,6 +216,109 @@
       </div>
     </div>
 
+    <!-- ── Edit Modal ────────────────────────────────────────── -->
+    <div v-if="editRow" class="modal-backdrop" @click.self="editRow = null">
+      <div class="modal-box" :class="{ 'dark-mode': isDark }">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit Schedule Entry</h3>
+          <button class="modal-close" @click="editRow = null">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" v-model="editForm.date" class="modal-input" />
+          </div>
+          <div class="form-group">
+            <label>Day</label>
+            <div class="select-wrap">
+              <select v-model="editForm.day" class="modal-input">
+                <option value="">— select —</option>
+                <option v-for="d in weekDays" :key="d" :value="d">{{ d }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" v-model="editForm.name" class="modal-input" placeholder="Full name" />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" v-model="editForm.email" class="modal-input" placeholder="email@example.com" />
+          </div>
+          <div class="form-group">
+            <label>Assignment</label>
+            <input type="text" v-model="editForm.assignment" class="modal-input" placeholder="e.g. 🔧 MAINTENANCE BATCH" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="editRow = null">Cancel</button>
+          <button class="btn-save" @click="saveEdit">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8" />
+            </svg>
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Upload Preview Modal ─────────────────────────────── -->
+    <div v-if="showPreviewModal" class="modal-backdrop" @click.self="showPreviewModal = false">
+      <div class="modal-box preview-modal" :class="{ 'dark-mode': isDark }">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Preview Schedule</h3>
+            <p class="preview-subtitle">{{ previewData.length }} entries — review before uploading</p>
+          </div>
+          <button class="modal-close" @click="showPreviewModal = false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="preview-table-wrap">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Day</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Assignment</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, i) in previewData" :key="i">
+                <td class="preview-num">{{ i + 1 }}</td>
+                <td>{{ row.date }}</td>
+                <td>{{ row.day }}</td>
+                <td class="preview-name">{{ row.name }}</td>
+                <td class="preview-email">{{ row.email || '—' }}</td>
+                <td class="preview-assignment">{{ row.assignment || '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showPreviewModal = false">Cancel</button>
+          <button class="btn-save" @click="confirmUpload" :disabled="uploadParsing">
+            <svg v-if="uploadParsing" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin">
+              <circle cx="12" cy="12" r="10" stroke-dasharray="31.4" stroke-dashoffset="10" />
+            </svg>
+            <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+            </svg>
+            {{ uploadParsing ? 'Uploading...' : 'Upload' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- ── Floating Controls Bar ──────────────────────────────── -->
     <div class="floating-bar">
       <button
@@ -225,13 +360,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import roasterData from '../assets/roaster.json';
+import { ref, computed, onMounted, nextTick } from 'vue';
+import * as XLSX from 'xlsx';
+import { getRoasterSchedule, saveRoasterSchedule } from '../api';
+import { useAuthStore } from '../stores/auth';
 
 interface RoasterItem {
   date: string;
   day: string;
   name: string;
+  email?: string;
+  assignment?: string | null;
 }
 
 interface MemberColor {
@@ -275,8 +414,135 @@ const isDark = ref<boolean>(savedTheme ? savedTheme === 'dark' : true);
 const viewMode = ref<'list' | 'calendar'>('list');
 const calYear  = ref(new Date().getFullYear());
 const calMonth = ref(new Date().getMonth());   // 0-indexed
-const roaster  = ref<RoasterItem[]>(roasterData);
+
+const roaster  = ref<RoasterItem[]>([]);
+const roasterLoading = ref(false);
+
+const fetchRoaster = async () => {
+  roasterLoading.value = true;
+  try {
+    const res = await getRoasterSchedule();
+    roaster.value = res.data.data || [];
+  } catch (err) {
+    console.error('Failed to fetch roaster:', err);
+  } finally {
+    roasterLoading.value = false;
+  }
+};
 const filters  = ref({ name: '', date: '', day: '' });
+
+const auth = useAuthStore();
+const canEdit = computed(() => auth.isSuperAdmin || auth.isAdmin);
+
+const uploadParsing = ref(false);
+const uploadMsg = ref<{ type: 'success' | 'error'; text: string } | null>(null);
+const showPreviewModal = ref(false);
+const previewData = ref<RoasterItem[]>([]);
+
+// Edit modal state
+const editRow = ref<{ item: RoasterItem; index: number } | null>(null);
+const editForm = ref({ date: '', day: '', name: '', email: '', assignment: '' });
+
+const startEdit = (item: RoasterItem) => {
+  const idx = roaster.value.indexOf(item);
+  editRow.value = { item, index: idx };
+  editForm.value = { date: item.date, day: item.day, name: item.name, email: item.email || '', assignment: item.assignment || '' };
+};
+
+const saveEdit = async () => {
+  if (!editRow.value) return;
+  const updated: RoasterItem = {
+    date:       editForm.value.date.trim(),
+    day:        editForm.value.day.trim(),
+    name:       editForm.value.name.trim(),
+    email:      editForm.value.email.trim() || undefined,
+    assignment: editForm.value.assignment.trim() || null,
+  };
+  const newList = [...roaster.value];
+  newList[editRow.value.index] = updated;
+  newList.sort((a, b) => a.date.localeCompare(b.date));
+  try {
+    await saveRoasterSchedule(newList);
+    roaster.value = newList;
+    editRow.value = null;
+  } catch (err) {
+    console.error('Failed to save edit:', err);
+    alert('Failed to save. Please try again.');
+  }
+};
+
+const handleUpload = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+
+  uploadMsg.value = null;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target?.result as ArrayBuffer);
+      const wb = XLSX.read(data, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws, { raw: true });
+
+      const toLocalISO = (val: any): string => {
+        if (!val) return '';
+        if (typeof val === 'number') {
+          const p = (XLSX.SSF as any).parse_date_code(val);
+          if (p) return `${p.y}-${String(p.m).padStart(2,'0')}-${String(p.d).padStart(2,'0')}`;
+        }
+        const s = String(val).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        return '';
+      };
+
+      // Preserve any manually-set assignments for dates that still exist after upload
+      const existingAssignments: Record<string, string | null> = {};
+      for (const r of roaster.value) {
+        existingAssignments[r.date] = r.assignment ?? null;
+      }
+
+      const parsed: RoasterItem[] = [];
+      for (const row of rows) {
+        const date  = toLocalISO(row['Date']);
+        const day   = (row['DayH']  || '').toString().trim();
+        const name  = (row['Name']  || '').toString().trim();
+        const email = (row['Email'] || '').toString().trim();
+        if (!date || !name) continue;
+        parsed.push({ date, day, name, email: email || undefined, assignment: existingAssignments[date] ?? null });
+      }
+
+      if (parsed.length === 0) {
+        uploadMsg.value = { type: 'error', text: 'No valid rows found. Check columns: Date, DayH, Name, Email.' };
+        return;
+      }
+
+      parsed.sort((a, b) => a.date.localeCompare(b.date));
+      previewData.value = parsed;
+      showPreviewModal.value = true;
+    } catch (err) {
+      uploadMsg.value = { type: 'error', text: 'Failed to parse file.' };
+    }
+  };
+  reader.readAsArrayBuffer(file);
+};
+
+const confirmUpload = async () => {
+  uploadParsing.value = true;
+  try {
+    await saveRoasterSchedule(previewData.value);
+    roaster.value = [...previewData.value];
+    showPreviewModal.value = false;
+    uploadMsg.value = { type: 'success', text: `${previewData.value.length} entries saved to server.` };
+    setTimeout(() => { uploadMsg.value = null; }, 4000);
+  } catch (err) {
+    uploadMsg.value = { type: 'error', text: 'Failed to save. Please try again.' };
+  } finally {
+    uploadParsing.value = false;
+  }
+};
 
 // ── Computed ─────────────────────────────────────────────────────
 const uniqueNames = computed(() => {
@@ -289,12 +555,14 @@ const isFiltered = computed(() =>
 );
 
 const filteredRoaster = computed(() =>
-  roaster.value.filter(item => {
-    const matchName = !filters.value.name || item.name === filters.value.name;
-    const matchDate = !filters.value.date || item.date === filters.value.date;
-    const matchDay  = !filters.value.day  || item.day  === filters.value.day;
-    return matchName && matchDate && matchDay;
-  })
+  roaster.value
+    .filter(item => {
+      const matchName = !filters.value.name || item.name === filters.value.name;
+      const matchDate = !filters.value.date || item.date === filters.value.date;
+      const matchDay  = !filters.value.day  || item.day  === filters.value.day;
+      return matchName && matchDate && matchDay;
+    })
+    .sort((a, b) => a.date.localeCompare(b.date))
 );
 
 const completedCount = computed(() => {
@@ -406,12 +674,12 @@ const toggleTheme = () => {
 };
 
 // ── Lifecycle ────────────────────────────────────────────────────
-onMounted(() => {
+onMounted(async () => {
   applyTheme();
-  setTimeout(() => {
-    const todayRow = document.querySelector('.is-today');
-    if (todayRow) todayRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, 500);
+  await fetchRoaster();
+  await nextTick();
+  const todayRow = document.querySelector('.is-today');
+  if (todayRow) todayRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 </script>
 
@@ -554,6 +822,361 @@ onMounted(() => {
   background: rgba(168,85,247,0.15);
 }
 .dark-mode .stat-divider { background: rgba(255,255,255,0.1); }
+
+/* ── Header right group ─────────────────────────────────────── */
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+.btn-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.2rem;
+  border-radius: 12px;
+  border: 1.5px solid rgba(168,85,247,0.35);
+  background: linear-gradient(135deg, rgba(244,114,182,0.12), rgba(168,85,247,0.12));
+  color: #7c3aed;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  white-space: nowrap;
+}
+.dark-mode .btn-upload {
+  border-color: rgba(244,114,182,0.4);
+  background: linear-gradient(135deg, rgba(244,114,182,0.18), rgba(168,85,247,0.18));
+  color: #f9a8d4;
+}
+.btn-upload:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(168,85,247,0.3);
+  background: linear-gradient(135deg, rgba(244,114,182,0.2), rgba(168,85,247,0.2));
+}
+.dark-mode .btn-upload:hover {
+  box-shadow: 0 6px 22px rgba(244,114,182,0.35);
+}
+.btn-upload.uploading { opacity: 0.7; cursor: default; pointer-events: none; }
+
+.upload-msg {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+}
+.upload-msg.success {
+  background: rgba(0,200,120,0.12);
+  color: #059669;
+  border: 1px solid rgba(0,200,120,0.25);
+}
+.dark-mode .upload-msg.success {
+  background: rgba(0,230,118,0.12);
+  color: #00e676;
+  border-color: rgba(0,230,118,0.3);
+}
+.upload-msg.error {
+  background: rgba(255,45,120,0.1);
+  color: #be123c;
+  border: 1px solid rgba(255,45,120,0.2);
+}
+.dark-mode .upload-msg.error {
+  background: rgba(255,45,120,0.15);
+  color: #ff8fab;
+  border-color: rgba(255,45,120,0.3);
+}
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Assignment column ──────────────────────────────────────── */
+.td-assignment { min-width: 180px; }
+
+.assignment-chip {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: rgba(234,88,12,0.1);
+  color: #c2410c;
+  border: 1px solid rgba(234,88,12,0.25);
+}
+.dark-mode .assignment-chip {
+  background: rgba(251,146,60,0.12);
+  color: #fb923c;
+  border-color: rgba(251,146,60,0.3);
+}
+
+.assignment-empty {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+}
+.dark-mode .assignment-empty { color: #334155; }
+
+/* ── Edit row button ────────────────────────────────────────── */
+.td-action { width: 48px; text-align: center; }
+
+.btn-edit-row {
+  background: rgba(168,85,247,0.1);
+  border: 1px solid rgba(168,85,247,0.25);
+  border-radius: 8px;
+  color: #7c3aed;
+  width: 32px; height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dark-mode .btn-edit-row {
+  background: rgba(192,132,252,0.12);
+  border-color: rgba(192,132,252,0.3);
+  color: #c084fc;
+}
+.btn-edit-row:hover:not(:disabled) {
+  background: rgba(168,85,247,0.22);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(168,85,247,0.3);
+}
+.btn-edit-row:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Edit Modal ─────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+  border: 1px solid rgba(168,85,247,0.15);
+  overflow: hidden;
+  animation: modalIn 0.25s cubic-bezier(0.16,1,0.3,1);
+}
+.modal-box.dark-mode {
+  background: #0f0a2a;
+  border-color: rgba(192,132,252,0.2);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.93) translateY(12px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(168,85,247,0.1);
+  background: linear-gradient(135deg, rgba(244,114,182,0.06), rgba(168,85,247,0.06));
+}
+.dark-mode .modal-header {
+  border-color: rgba(192,132,252,0.15);
+  background: rgba(255,255,255,0.03);
+}
+
+.modal-title {
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.dark-mode .modal-title {
+  background: linear-gradient(135deg, #f9a8d4, #c084fc);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  display: flex;
+  transition: all 0.2s;
+}
+.modal-close:hover { background: rgba(168,85,247,0.1); color: #7c3aed; }
+.dark-mode .modal-close:hover { background: rgba(255,255,255,0.08); color: #c084fc; }
+
+.modal-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.form-group label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+.dark-mode .form-group label { color: #94a3b8; }
+
+.modal-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 0.9rem;
+  border: 1.5px solid rgba(168,85,247,0.2);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.9);
+  color: #1e293b;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+  appearance: auto;
+}
+.dark-mode .modal-input {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(192,132,252,0.2);
+  color: #e2e8f0;
+  color-scheme: dark;
+}
+.modal-input:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+}
+.dark-mode .modal-input:focus {
+  border-color: #c084fc;
+  box-shadow: 0 0 0 3px rgba(192,132,252,0.15);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(168,85,247,0.1);
+}
+.dark-mode .modal-footer { border-color: rgba(192,132,252,0.12); }
+
+.btn-cancel {
+  padding: 0.55rem 1.2rem;
+  border: 1.5px solid rgba(100,116,139,0.3);
+  border-radius: 10px;
+  background: transparent;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-cancel:hover { background: rgba(100,116,139,0.08); }
+.dark-mode .btn-cancel { color: #94a3b8; border-color: rgba(255,255,255,0.12); }
+.dark-mode .btn-cancel:hover { background: rgba(255,255,255,0.06); }
+
+.btn-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.3rem;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f472b6, #a855f7, #6366f1);
+  color: white;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(168,85,247,0.4);
+  transition: all 0.2s;
+}
+.btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(168,85,247,0.5); }
+
+/* ── Preview Modal ──────────────────────────────────────────── */
+.preview-modal { max-width: 720px; max-height: 85vh; display: flex; flex-direction: column; }
+
+.preview-subtitle {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: 0.2rem 0 0;
+  font-weight: 500;
+}
+.dark-mode .preview-subtitle { color: #64748b; }
+
+.preview-table-wrap {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 1.5rem;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+.preview-table th {
+  position: sticky;
+  top: 0;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  background: #fff;
+  border-bottom: 1px solid rgba(168,85,247,0.12);
+  z-index: 1;
+}
+.dark-mode .preview-table th {
+  background: #0f0a2a;
+  border-color: rgba(192,132,252,0.15);
+  color: #475569;
+}
+.preview-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid rgba(168,85,247,0.06);
+  color: #334155;
+}
+.dark-mode .preview-table td {
+  border-color: rgba(255,255,255,0.05);
+  color: #cbd5e1;
+}
+.preview-table tr:last-child td { border-bottom: none; }
+.preview-table tr:hover td { background: rgba(168,85,247,0.03); }
+.dark-mode .preview-table tr:hover td { background: rgba(255,255,255,0.03); }
+
+.preview-num { color: #94a3b8; font-size: 0.72rem; width: 36px; }
+.preview-name { font-weight: 700; }
+.preview-email { color: #64748b; font-size: 0.78rem; }
+.dark-mode .preview-email { color: #475569; }
+.preview-assignment { color: #c2410c; font-size: 0.78rem; font-weight: 600; }
+.dark-mode .preview-assignment { color: #fb923c; }
 
 /* ═══════════════════════════════════════════════════════════════
    FILTER PANEL
@@ -1212,7 +1835,9 @@ onMounted(() => {
   /* Layout */
   .roaster-container { margin: -2rem -1rem -2rem -1rem; padding: 1.25rem 1rem 8rem; }
   .schedule-header   { flex-direction: column; align-items: flex-start; gap: 1.25rem; }
+  .header-right      { width: 100%; align-items: stretch; }
   .header-stats      { width: 100%; justify-content: space-around; padding: 0.75rem 1rem; }
+  .btn-upload        { justify-content: center; }
   .title-h1          { font-size: 1.4rem; }
   .filter-row        { grid-template-columns: 1fr; gap: 1rem; }
 

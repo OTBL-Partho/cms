@@ -28,6 +28,7 @@ const connectionLogRoutes = require('./connectionLogs');
 const cmoRoutes = require('./cmo');
 const cmoMeterReplacementRoutes = require('./cmoMeterReplacement');
 const cmoMeterSwapRoutes = require('./cmoMeterSwap');
+const roasterRoutes = require('./roaster');
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes); // Added user routes
@@ -58,5 +59,6 @@ router.use('/connection-logs', connectionLogRoutes);
 router.use('/cmo', cmoRoutes);
 router.use('/cmo-meter-replacement', cmoMeterReplacementRoutes);
 router.use('/cmo-meter-swap', cmoMeterSwapRoutes);
+router.use('/roaster', roasterRoutes);
 
 module.exports = router;

@@ -27,6 +27,7 @@ const CommentAttachment = require('./CommentAttachment');
 const TimeLog = require('./TimeLog');
 const ProjectMember = require('./ProjectMember');
 const ConnectionLog = require('./ConnectionLog');
+const RoasterSchedule = require('./RoasterSchedule');
 
 
 const models = {
@@ -57,7 +58,8 @@ const models = {
   CommentAttachment,
   TimeLog,
   ProjectMember,
-  ConnectionLog
+  ConnectionLog,
+  RoasterSchedule,
 };
 
 Comment.belongsTo(Ticket, { foreignKey: 'ticket_id', onDelete: 'CASCADE' });
