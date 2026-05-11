@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getCMOs, getCMOStatistics, checkMDMEntry, exportCMOData, uploadCustomerInfo, getFilterOptions, multiSearchCMO } = require('../controllers/cmoController');
+const { getCMOs, getCMOStatistics, checkMDMEntry, exportCMOData, uploadCustomerInfo, getFilterOptions, multiSearchCMO, getCMOCustomerSearch } = require('../controllers/cmoController');
 const { protect, hasRole } = require('../middleware/authMiddleware');
 
 // All CMO routes require authentication
@@ -14,6 +14,9 @@ router.get('/filter-options', hasRole('Super Admin', 'Admin'), getFilterOptions)
 
 // GET /api/cmo/multi-search?ids=id1,id2,... — parallel fan-out search per ID
 router.get('/multi-search', hasRole('Super Admin', 'Admin'), multiSearchCMO);
+
+// GET /api/cmo/customer-search?q=X — full customer+meter detail by customer no or meter no
+router.get('/customer-search', hasRole('Super Admin', 'Admin'), getCMOCustomerSearch);
 
 // POST /api/cmo/check-mdm-entry — check all CMO records against Customer DB
 router.post('/check-mdm-entry', hasRole('Super Admin', 'Admin'), checkMDMEntry);

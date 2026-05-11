@@ -319,6 +319,10 @@ export const getRoasterSchedule = () => {
   return apiClient.get('/roaster');
 };
 
+export const getCMOCustomerSearch = (q: string) => {
+  return apiClient.get('/cmo/customer-search', { params: { q } });
+};
+
 export const saveRoasterSchedule = (entries: { date: string; day: string; name: string; email?: string; assignment?: string | null }[]) => {
   return apiClient.post('/roaster', { entries });
 };

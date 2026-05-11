@@ -230,11 +230,20 @@
             <li class="sidebar__item sidebar__item--divider" v-if="auth.isAuthenticated && (auth.user?.role === 'Super Admin' || auth.user?.role === 'Admin')"></li>
 
             <li class="sidebar__item" v-if="auth.isAuthenticated && (auth.user?.role === 'Super Admin' || auth.user?.role === 'Admin')">
-              <router-link to="/cmo" class="sidebar__link" :class="{ 'sidebar__link--active': $route.path.startsWith('/cmo') }" @click="closeSidebarOnMobile">
+              <router-link to="/cmo" class="sidebar__link" :class="{ 'sidebar__link--active': $route.path === '/cmo' }" @click="closeSidebarOnMobile">
                 <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>
                 CMO Data
+              </router-link>
+            </li>
+
+            <li class="sidebar__item" v-if="auth.isAuthenticated && (auth.user?.role === 'Super Admin' || auth.user?.role === 'Admin')">
+              <router-link to="/cmo-customer" class="sidebar__link" :class="{ 'sidebar__link--active': $route.path === '/cmo-customer' }" @click="closeSidebarOnMobile">
+                <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/>
+                </svg>
+                CMO Customer
               </router-link>
             </li>
 

@@ -322,6 +322,60 @@ exports.multiSearchCMO = async (req, res) => {
   }
 };
 
+// 30-second TTL cache for customer search results
+const _customerSearchCache = new Map();
+const _CACHE_TTL_MS = 30000;
+
+/**
+ * GET /api/cmo/customer-search?q=X
+ * Search customer + meter detail by customer number or meter number via CMO API.
+ * Results are cached for 30 seconds per query to reduce CMO API round-trips.
+ */
+exports.getCMOCustomerSearch = async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || !String(q).trim()) {
+      return res.status(400).json({ success: false, message: 'Query param q is required' });
+    }
+
+    const search = String(q).trim().toLowerCase();
+
+    // Return cached result if still fresh
+    const cached = _customerSearchCache.get(search);
+    if (cached && Date.now() - cached.ts < _CACHE_TTL_MS) {
+      return res.json({ success: true, data: cached.data, total: cached.data.length });
+    }
+
+    const token = await getCmoApiToken();
+
+    const meterRes = await axios.get(`${CMO_API_URL}/cmo/cms-list`, {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { search, limit: 20 },
+      timeout: 20000
+    });
+
+    const data = meterRes.data?.data || [];
+
+    // Evict stale entries periodically (keep cache small)
+    if (_customerSearchCache.size > 200) {
+      const cutoff = Date.now() - _CACHE_TTL_MS;
+      for (const [k, v] of _customerSearchCache) {
+        if (v.ts < cutoff) _customerSearchCache.delete(k);
+      }
+    }
+    _customerSearchCache.set(search, { data, ts: Date.now() });
+
+    return res.json({ success: true, data, total: data.length });
+  } catch (error) {
+    console.error('CMO customer search error:', error.response?.data || error.message);
+    if (error.response?.status === 401) clearCmoToken();
+    const statusCode = error.response?.status || 500;
+    const message = error.response?.data?.message || error.message || 'Search failed';
+    return res.status(500).json({ success: false, message });
+  }
+};
+
 /**
  * GET /api/cmo/filter-options — Proxy to CMO API GET /api/cmo/filter-options
  * Returns distinct NOCS, CPC_CPR values for dropdown filters

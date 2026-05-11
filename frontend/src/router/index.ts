@@ -65,6 +65,7 @@ const router = createRouter({
         { path: 'complaints/reports', name: 'complaint-reports', component: () => import('../views/ComplaintReportsView.vue'), meta: { requiresAuth: true, roles: ['Super Admin', 'Admin', 'Manager', 'Agent'] } },
         { path: 'telegram-notifications', name: 'telegram-notifications', component: () => import('../views/TelegramNotificationsView.vue'), meta: { requiresAuth: true, roles: ['Super Admin', 'Admin'] } },
         { path: 'cmo', name: 'cmo', component: () => import('../views/CmoView.vue'), meta: { requiresAuth: true, roles: ['Super Admin', 'Admin'] } },
+        { path: 'cmo-customer', name: 'cmo-customer', component: () => import('../views/CmoCustomerView.vue'), meta: { requiresAuth: true, roles: ['Super Admin', 'Admin'] } },
         { path: 'roaster-schedule', name: 'roaster-schedule', component: () => import('../views/AmiRoasterScheduleView.vue'), meta: { requiresAuth: true } },
         // Analytics routes
         { path: 'analytics', name: 'analytics-dashboard', component: () => import('../views/analytics/OrganizationDashboard.vue'), meta: { requiresAuth: true, roles: ['Manager', 'Admin', 'Super Admin'] } },
