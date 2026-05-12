@@ -88,9 +88,17 @@
     <div v-else-if="results.length > 0">
       <!-- Row count + Export -->
       <div class="flex items-center justify-between mb-4">
-        <p class="text-sm text-gray-600">
-          Showing {{ results.length }} record{{ results.length !== 1 ? 's' : '' }} for "{{ lastQuery }}"
-        </p>
+        <div>
+          <p class="text-sm text-gray-600">
+            Showing {{ results.length }} record{{ results.length !== 1 ? 's' : '' }} for "{{ lastQuery }}"
+          </p>
+          <p v-if="foundTerms.length > 0" class="text-sm text-green-600 font-medium mt-1">
+            Found: {{ foundTerms.join(', ') }}
+          </p>
+          <p v-if="missingTerms.length > 0" class="text-sm text-orange-600 font-medium mt-1">
+            Not found: {{ missingTerms.join(', ') }}
+          </p>
+        </div>
         <button
           @click="exportToExcel"
           :disabled="exporting"
@@ -183,28 +191,66 @@ import { ref } from 'vue';
 import { getCMOCustomerSearch, getCMOMultiSearch } from '../api';
 import * as XLSX from 'xlsx';
 
-const query     = ref('');
-const loading   = ref(false);
-const error     = ref('');
-const results   = ref<any[]>([]);
-const searched  = ref(false);
-const lastQuery = ref('');
-const exporting = ref(false);
+const query        = ref('');
+const loading      = ref(false);
+const error        = ref('');
+const results      = ref<any[]>([]);
+const searched     = ref(false);
+const lastQuery    = ref('');
+const exporting    = ref(false);
+const missingTerms = ref<string[]>([]);
+const foundTerms   = ref<string[]>([]);
 
 const search = async () => {
   if (!query.value.trim()) return;
-  loading.value  = true;
-  error.value    = '';
-  results.value  = [];
-  lastQuery.value = query.value.trim();
-  searched.value  = false;
+  loading.value      = true;
+  error.value        = '';
+  results.value      = [];
+  missingTerms.value = [];
+  foundTerms.value   = [];
+  lastQuery.value    = query.value.trim();
+  searched.value     = false;
   try {
     const q = query.value.trim();
     const isMulti = q.includes(',');
     const res = isMulti
       ? await getCMOMultiSearch(q)
       : await getCMOCustomerSearch(q);
-    results.value = res.data?.data || [];
+    const all: any[] = res.data?.data || [];
+
+    // Build list of search terms (lowercased)
+    const terms = (isMulti ? q.split(',') : [q])
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean);
+
+    // 8-digit number starting with 7, 8, or 9 → meter number
+    const isMeterNo = (s: string) => /^[789]\d{7}$/.test(s);
+
+    // Exact match only — route each term to the correct field
+    results.value = all.filter(row =>
+      terms.some(term => {
+        if (isMeterNo(term)) {
+          return String(row.NewMeterNoOCR ?? '').toLowerCase() === term;
+        }
+        return (
+          String(row.OldConsumerId ?? '').toLowerCase() === term ||
+          String(row.CustomerId ?? '').toLowerCase() === term
+        );
+      })
+    );
+
+    // Compute which terms had no match
+    if (isMulti) {
+      const matched = new Set(
+        results.value.flatMap(row => [
+          String(row.OldConsumerId ?? '').toLowerCase(),
+          String(row.CustomerId ?? '').toLowerCase(),
+          String(row.NewMeterNoOCR ?? '').toLowerCase(),
+        ])
+      );
+      missingTerms.value = terms.filter(t => !matched.has(t));
+      foundTerms.value   = terms.filter(t =>  matched.has(t));
+    }
   } catch (err: any) {
     error.value = err.response?.data?.message || err.message || 'Search failed';
   } finally {
@@ -214,10 +260,12 @@ const search = async () => {
 };
 
 const clearSearch = () => {
-  query.value    = '';
-  results.value  = [];
-  error.value    = '';
-  searched.value = false;
+  query.value        = '';
+  results.value      = [];
+  error.value        = '';
+  searched.value     = false;
+  missingTerms.value = [];
+  foundTerms.value   = [];
 };
 
 const exportToExcel = () => {
